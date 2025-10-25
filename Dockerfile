@@ -3,6 +3,12 @@ FROM php:8.3-cli AS build
 
 WORKDIR /app
 
+# Installer les extensions nécessaires à Laravel dans l'étape de build
+RUN apt-get update && apt-get install -y \
+    libpq-dev libzip-dev zip unzip git curl && \
+    docker-php-ext-install pdo pdo_pgsql zip && \
+    rm -rf /var/lib/apt/lists/*
+
 # Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
