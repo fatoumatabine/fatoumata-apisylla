@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class StoreCompteRequest extends FormRequest
 {
@@ -28,19 +29,41 @@ class StoreCompteRequest extends FormRequest
             'solde' => 'required|numeric|min:10000',
             'client' => 'required|array',
             'client.id' => 'nullable|integer|exists:clients,id',
-            'client.titulaire' => 'required|string|max:255',
-            'client.nci' => 'required|unique:clients,nci',
-            'client.email' => 'required|email|unique:clients,email',
-            'client.telephone' => 'required|unique:clients,telephone',
-            'client.adresse' => 'required|string',
+            'client.titulaire' => 'nullable|string|max:255',
+            'client.nci' => 'nullable|string',
+            'client.email' => 'nullable|email',
+            'client.telephone' => 'nullable|string',
+            'client.adresse' => 'nullable|string',
         ];
     }
 
     public function withValidator($validator)
     {
-        $validator->addRules([
-            'client.nci' => ['required', new \App\Rules\SenegalNci],
-            'client.telephone' => ['required', new \App\Rules\SenegalPhone],
-        ]);
+        $validator->sometimes('client.titulaire', 'required', function ($input) {
+            return !isset($input->client['id']);
+        });
+
+        $validator->sometimes('client.nci', ['required', 'unique:clients,nci', new \App\Rules\SenegalNci], function ($input) {
+            return !isset($input->client['id']);
+        });
+
+        $validator->sometimes('client.email', ['required', 'unique:clients,email'], function ($input) {
+            return !isset($input->client['id']);
+        });
+
+        $validator->sometimes('client.telephone', ['required', 'unique:clients,telephone', new \App\Rules\SenegalPhone], function ($input) {
+            return !isset($input->client['id']);
+        });
+
+        $validator->sometimes('client.adresse', 'required', function ($input) {
+            return !isset($input->client['id']);
+        });
+
+        // Pour le débogage
+        $validator->after(function ($validator) {
+            if ($validator->fails()) {
+                \Log::debug('Validation errors in StoreCompteRequest:', $validator->errors()->toArray());
+            }
+        });
     }
 }

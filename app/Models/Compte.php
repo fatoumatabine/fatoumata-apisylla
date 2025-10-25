@@ -25,11 +25,17 @@ class Compte extends Model
         'statut',
         'metadata',
         'client_id',
+        'date_debut_blocage',
+        'date_fin_blocage',
+        'archived',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'dateCreation' => 'datetime',
+        'date_debut_blocage' => 'datetime',
+        'date_fin_blocage' => 'datetime',
+        'archived' => 'boolean',
     ];
 
     protected static function boot()
@@ -46,6 +52,11 @@ class Compte extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 
     public function scopeNumero($query, $numeroCompte)
