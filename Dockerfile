@@ -1,12 +1,12 @@
 # Étape 1 : Build de l’application Laravel
-FROM composer:2 AS build
+FROM php:8.3-cli AS build
 
 WORKDIR /app
 
-# Copier les fichiers nécessaires pour composer
-COPY composer.json composer.lock ./
+# Installer Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copier le reste de l’application
+# Copier tous les fichiers de l’application
 COPY . .
 
 # Installer les dépendances PHP
