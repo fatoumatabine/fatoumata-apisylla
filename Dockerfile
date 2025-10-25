@@ -34,13 +34,7 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
     && chown -R laravel:laravel /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# Générer la clé d'application et optimiser
-USER laravel
-RUN php artisan key:generate --force && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
-USER root
+# Les commandes de génération de clé et de cache seront gérées par Render ou au démarrage de l'application.
 
 # Copier le script d'entrée
 COPY docker-entrypoint.sh /usr/local/bin/
