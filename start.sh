@@ -1,16 +1,9 @@
-#!/usr/bin/env bash
-echo "Running composer"
+#!/bin/sh
 
-composer install --no-dev --working-dir=/var/www/html
+set -e
 
-echo "Caching config..."
-php artisan config:cache
-
-echo "Caching routes..."
-php artisan route:cache
-
-echo "Publishing cloudinary provider..."
-php artisan vendor:publish --provider="CloudinaryLabs\CloudinaryLaravel\CloudinaryServiceProvider" --tag="cloudinary-laravel-config"
-
-echo "Running migrations..."
+# Exécuter les migrations de base de données
 php artisan migrate --force
+
+# Démarrer le serveur Nginx/PHP-FPM
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
