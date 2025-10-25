@@ -17,25 +17,25 @@ services:
         value: pgsql
       - key: DB_HOST
         fromDatabase:
-          name: laravel-db
+          name: laravel_lau3
           property: host
       - key: DB_PORT
         fromDatabase:
-          name: laravel-db
+          name:  laravel_lau3
           property: port
       - key: DB_DATABASE
         fromDatabase:
-          name: laravel-db
+          name: laravel_lau3
           property: database
       - key: DB_USERNAME
         fromDatabase:
-          name: laravel-db
+          name: laravel_lau3
           property: user
       - key: DB_PASSWORD
         fromDatabase:
-          name: laravel-db
+          name: laravel_lau3
           property: password
 
 databases:
-  - name: laravel-db
+  - name: laravel_lau3
     plan: free
