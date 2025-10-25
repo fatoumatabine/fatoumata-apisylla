@@ -27,7 +27,8 @@ COPY composer.lock composer.json /var/www/html/
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev
+ENV COMPOSER_MEMORY_LIMIT=-1
+RUN composer install --optimize-autoloader --no-dev --no-interaction
 
 # Copy application code
 COPY . /var/www/html
