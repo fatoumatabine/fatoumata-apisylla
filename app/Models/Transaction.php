@@ -18,10 +18,12 @@ class Transaction extends Model
         'devise',
         'description',
         'dateTransaction',
+        'archived',
     ];
 
     protected $casts = [
         'dateTransaction' => 'datetime',
+        'archived' => 'boolean',
     ];
 
     public function compte(): BelongsTo

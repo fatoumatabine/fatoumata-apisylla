@@ -1,58 +1,36 @@
-# Use the official PHP image with Apache
-FROM php:8.1-apache
+# Étape 1 : Build de l’application Laravel
+FROM composer:2 AS build
 
-# Set working directory
+WORKDIR /app
+
+# Copier les fichiers nécessaires pour composer
+COPY composer.json composer.lock ./
+
+# Installer les dépendances PHP
+RUN composer install --no-dev --optimize-autoloader
+
+# Copier le reste de l’application
+COPY . .
+
+# Étape 2 : Image finale
+FROM php:8.3-fpm
+
+# Installer les extensions nécessaires à Laravel
+RUN apt-get update && apt-get install -y \
+    libpq-dev libzip-dev zip unzip git curl && \
+    docker-php-ext-install pdo pdo_pgsql zip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copier les fichiers de l’application depuis l’étape build
+COPY --from=build /app /var/www/html
+
 WORKDIR /var/www/html
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    postgresql-client \
-    libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
+# Donner les bons droits à storage et bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Exposer le port 8000
+EXPOSE 8000
 
-# Copy composer.lock and composer.json
-COPY composer.lock composer.json /var/www/html/
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev
-
-# Copy application code
-COPY . /var/www/html
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
-
-# Copy Apache config
-COPY <<EOF /etc/apache2/sites-available/000-default.conf
-<VirtualHost *:80>
-    ServerAdmin webmaster@localhost
-    DocumentRoot /var/www/html/public
-    <Directory /var/www/html/public>
-        AllowOverride All
-        Require all granted
-    </Directory>
-    ErrorLog \${APACHE_LOG_DIR}/error.log
-    CustomLog \${APACHE_LOG_DIR}/access.log combined
-</VirtualHost>
-EOF
-
-# Expose port 80
-EXPOSE 80
-
-# Start Apache
-CMD ["apache2-foreground"]
+# Commande de démarrage
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000

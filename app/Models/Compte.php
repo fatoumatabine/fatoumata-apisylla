@@ -25,11 +25,17 @@ class Compte extends Model
         'statut',
         'metadata',
         'client_id',
+        'date_debut_blocage',
+        'date_fin_blocage',
+        'archived',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'dateCreation' => 'datetime',
+        'date_debut_blocage' => 'datetime',
+        'date_fin_blocage' => 'datetime',
+        'archived' => 'boolean',
     ];
 
     protected static function boot()
@@ -48,6 +54,11 @@ class Compte extends Model
         return $this->belongsTo(Client::class);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     public function scopeNumero($query, $numeroCompte)
     {
         return $query->where('numeroCompte', $numeroCompte);
@@ -55,8 +66,16 @@ class Compte extends Model
 
     public function scopeClient($query, $telephone)
     {
-        return $query->whereHas('client', function ($q) use ($telephone) {
-            $q->where('telephone', $telephone);
-        });
+    return $query->whereHas('client', function ($q) use ($telephone) {
+    $q->where('telephone', $telephone);
+    });
+    }
+
+    // Attribut personnalisé pour le solde (calculé)
+    public function getSoldeAttribute($value)
+    {
+        // Pour l'instant, retourner la valeur stockée
+        // Plus tard, calculer : somme dépôts - somme retraits
+        return $value;
     }
 }

@@ -15,10 +15,13 @@ class Client extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'nom',
-        'prenom',
-        'email',
-        'telephone',
+    'titulaire',
+    'nci',
+    'email',
+    'telephone',
+        'adresse',
+        'password',
+        'code',
     ];
 
     public function comptes(): HasMany

@@ -18,10 +18,13 @@ class ClientFactory extends Factory
     {
         return [
             'id' => (string) \Illuminate\Support\Str::uuid(),
-            'nom' => $this->faker->lastName(),
-            'prenom' => $this->faker->firstName(),
+            'titulaire' => $this->faker->name(),
+            'nci' => $this->faker->unique()->numerify('#############'), // 13 chiffres pour le NCI
             'email' => $this->faker->unique()->safeEmail(),
             'telephone' => $this->faker->phoneNumber(),
+            'adresse' => $this->faker->address(),
+            'password' => bcrypt('password'), // Mot de passe par défaut pour les tests
+            'code' => $this->faker->randomNumber(6, true), // Code par défaut pour les tests
         ];
     }
 }
