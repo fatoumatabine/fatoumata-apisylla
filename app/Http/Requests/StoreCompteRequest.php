@@ -22,12 +22,25 @@ class StoreCompteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'titulaire' => 'required|string|max:255',
             'type' => 'required|in:epargne,cheque',
-            'solde' => 'numeric|min:0',
-            'devise' => 'required|string|max:3',
-            'statut' => 'in:actif,bloque,ferme',
-            'metadata' => 'nullable|array',
+            'soldeInitial' => 'nullable|numeric|min:0', // peut-être pas utilisé, mais dans le body
+            'devise' => 'required|string|size:3',
+            'solde' => 'required|numeric|min:10000',
+            'client' => 'required|array',
+            'client.id' => 'nullable|integer|exists:clients,id',
+            'client.titulaire' => 'required|string|max:255',
+            'client.nci' => 'required|unique:clients,nci',
+            'client.email' => 'required|email|unique:clients,email',
+            'client.telephone' => 'required|unique:clients,telephone',
+            'client.adresse' => 'required|string',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->addRules([
+            'client.nci' => ['required', new \App\Rules\SenegalNci],
+            'client.telephone' => ['required', new \App\Rules\SenegalPhone],
+        ]);
     }
 }

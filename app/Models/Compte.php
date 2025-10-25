@@ -55,8 +55,16 @@ class Compte extends Model
 
     public function scopeClient($query, $telephone)
     {
-        return $query->whereHas('client', function ($q) use ($telephone) {
-            $q->where('telephone', $telephone);
-        });
+    return $query->whereHas('client', function ($q) use ($telephone) {
+    $q->where('telephone', $telephone);
+    });
+    }
+
+    // Attribut personnalisé pour le solde (calculé)
+    public function getSoldeAttribute($value)
+    {
+        // Pour l'instant, retourner la valeur stockée
+        // Plus tard, calculer : somme dépôts - somme retraits
+        return $value;
     }
 }
