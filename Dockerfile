@@ -1,42 +1,62 @@
-# Étape 1 : Build de l’application Laravel
-FROM php:8.3-cli AS build
+# Étape 1: Build des dépendances PHP
+FROM composer:2.6 AS composer-build
 
 WORKDIR /app
 
-# Installer les extensions nécessaires à Laravel dans l'étape de build
-RUN apt-get update && apt-get install -y \
-    libpq-dev libzip-dev zip unzip git curl && \
-    docker-php-ext-install pdo pdo_pgsql zip && \
-    rm -rf /var/lib/apt/lists/*
+# Copier les fichiers de dépendances
+COPY laravel-app/composer.json laravel-app/composer.lock ./
 
-# Installer Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Installer les dépendances PHP sans scripts post-install
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
 
-# Copier tous les fichiers de l’application
-COPY . .
+# Étape 2: Image finale pour l'application
+FROM php:8.3-fpm-alpine
 
-# Installer les dépendances PHP
-RUN composer install --no-dev --optimize-autoloader
+# Installer les extensions PHP nécessaires
+RUN apk add --no-cache postgresql-dev \
+    && docker-php-ext-install pdo pdo_pgsql
 
-# Étape 2 : Image finale
-FROM php:8.3-fpm
+# Créer un utilisateur non-root
+RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
 
-# Installer les extensions nécessaires à Laravel
-RUN apt-get update && apt-get install -y \
-    libpq-dev libzip-dev zip unzip git curl && \
-    docker-php-ext-install pdo pdo_pgsql zip && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copier les fichiers de l’application depuis l’étape build
-COPY --from=build /app /var/www/html
-
+# Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# Donner les bons droits à storage et bootstrap/cache
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Copier les dépendances installées depuis l'étape de build
+COPY --from=composer-build /app/vendor ./laravel-app/vendor
+
+# Copier le reste du code de l'application
+COPY laravel-app .
+
+# Copier le fichier .env.example en .env
+RUN cp .env.example .env
+
+# Créer les répertoires nécessaires et définir les permissions
+RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
+    && mkdir -p storage/logs \
+    && mkdir -p bootstrap/cache \
+    && chown -R laravel:laravel /var/www/html \
+    && chmod -R 775 storage bootstrap/cache \
+    && chown laravel:laravel .env
+
+# Générer la clé d'application et optimiser
+USER laravel
+RUN cd /var/www/html && \
+    php artisan key:generate --force && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+USER root
+
+# Copier le script d'entrée
+COPY laravel-app/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Passer à l'utilisateur non-root
+USER laravel
 
 # Exposer le port 8000
 EXPOSE 8000
 
-# Commande de démarrage
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
+# Commande par défaut
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
