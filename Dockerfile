@@ -13,7 +13,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 FROM php:8.3-fpm-alpine
 
 # Installer les extensions PHP nécessaires
-RUN apk add --no-cache postgresql-dev \
+RUN apk add --no-cache postgresql-dev postgresql-client \
     && docker-php-ext-install pdo pdo_pgsql
     # Créer un utilisateur non-root
 RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
@@ -74,5 +74,5 @@ USER laravel
 # Exposer le port 8000
 EXPOSE 8000
 
-# Commande par défaut
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Utiliser le script d'entrée
+ENTRYPOINT ["docker-entrypoint.sh"]
