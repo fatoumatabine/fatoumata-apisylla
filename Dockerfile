@@ -6,11 +6,11 @@ WORKDIR /app
 # Copier les fichiers nécessaires pour composer
 COPY composer.json composer.lock ./
 
-# Installer les dépendances PHP
-RUN composer install --no-dev --optimize-autoloader
-
 # Copier le reste de l’application
 COPY . .
+
+# Installer les dépendances PHP
+RUN composer install --no-dev --optimize-autoloader
 
 # Étape 2 : Image finale
 FROM php:8.3-fpm
