@@ -45,6 +45,15 @@ Route::group(['middleware' => []], function () {
         if (file_exists($path)) {
             return response()->file($path, ['Content-Type' => 'application/json']);
         }
+        // Générer la documentation si elle n'existe pas
+        try {
+            \Illuminate\Support\Facades\Artisan::call('l5-swagger:generate');
+            if (file_exists($path)) {
+                return response()->file($path, ['Content-Type' => 'application/json']);
+            }
+        } catch (\Exception $e) {
+            // Ignore l'erreur et continue
+        }
         return response()->json(['error' => 'Documentation not found'], 404);
     });
 });
