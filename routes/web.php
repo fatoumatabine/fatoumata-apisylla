@@ -14,13 +14,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return response()->json([
-        'success' => true,
-        'message' => 'API Comptes - Bienvenue',
-        'version' => '1.0.0',
-        'endpoints' => [
-            'comptes' => '/api/v1/comptes',
-            'comptes_archives' => '/api/v1/comptes/archived'
-        ]
-    ]);
+    return 'API Comptes - Bienvenue ! Utilisez /api/v1/comptes pour accéder aux comptes.';
 });
+
