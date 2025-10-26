@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Enregistrer Faker pour les seeders en production
+        if ($this->app->environment('production')) {
+            $this->app->singleton(\Faker\Generator::class, function () {
+                return \Faker\Factory::create('fr_FR');
+            });
+        }
     }
 }
