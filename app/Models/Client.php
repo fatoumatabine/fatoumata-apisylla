@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Hash;
 
 class Client extends Model
 {
@@ -15,14 +16,37 @@ class Client extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-    'titulaire',
-    'nci',
-    'email',
-    'telephone',
+        'titulaire',
+        'nci',
+        'email',
+        'telephone',
         'adresse',
         'password',
         'code',
     ];
+
+    protected $hidden = [
+        'password',
+        'code',
+    ];
+
+    protected $casts = [
+        'password' => 'hashed',
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->password)) {
+                $model->password = Hash::make(strtoupper(substr(md5(uniqid()), 0, 8)));
+            }
+            if (empty($model->code)) {
+                $model->code = strtoupper(substr(md5(uniqid()), 0, 6));
+            }
+        });
+    }
 
     public function comptes(): HasMany
     {

@@ -43,27 +43,20 @@ class StoreCompteRequest extends FormRequest
             return !isset($input->client['id']);
         });
 
-        $validator->sometimes('client.nci', ['required', 'unique:clients,nci', new \App\Rules\SenegalNci], function ($input) {
+        $validator->sometimes('client.nci', 'required|unique:clients,nci|regex:/^\d{13}$/', function ($input) {
             return !isset($input->client['id']);
         });
 
-        $validator->sometimes('client.email', ['required', 'unique:clients,email'], function ($input) {
+        $validator->sometimes('client.email', 'required|email|unique:clients,email', function ($input) {
             return !isset($input->client['id']);
         });
 
-        $validator->sometimes('client.telephone', ['required', 'unique:clients,telephone', new \App\Rules\SenegalPhone], function ($input) {
+        $validator->sometimes('client.telephone', 'required|unique:clients,telephone|regex:/^(\+221|221)?7[0678]\d{7}$/', function ($input) {
             return !isset($input->client['id']);
         });
 
         $validator->sometimes('client.adresse', 'required', function ($input) {
             return !isset($input->client['id']);
-        });
-
-        // Pour le débogage
-        $validator->after(function ($validator) {
-            if ($validator->fails()) {
-                \Log::debug('Validation errors in StoreCompteRequest:', $validator->errors()->toArray());
-            }
         });
     }
 }

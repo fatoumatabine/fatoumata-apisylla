@@ -31,5 +31,8 @@ done
 echo "Database is up - executing migrations"
 php artisan migrate --force
 
+echo "Running database seeders..."
+php artisan db:seed --force
+
 echo "Starting Laravel application..."
 exec php artisan serve --host=0.0.0.0 --port=8000

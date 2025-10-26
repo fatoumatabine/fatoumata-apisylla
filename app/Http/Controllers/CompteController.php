@@ -92,8 +92,10 @@ class CompteController extends Controller
                 // Si le client est trouvé par email/téléphone, les données de la requête sont utilisées pour la création du compte.
             }
 
-            // Générer numéro de compte
-            $numeroCompte = 'C' . strtoupper(\Illuminate\Support\Str::random(9));
+            // Générer numéro de compte unique
+            do {
+                $numeroCompte = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+            } while (Compte::where('numeroCompte', $numeroCompte)->exists());
 
             // Créer le compte
             $compte = Compte::create([
@@ -112,8 +114,8 @@ class CompteController extends Controller
 
             return $this->success(new CompteResource($compte), 'Compte créé avec succès', 201);
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de la création du compte: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
+            Log::error('Erreur lors de la création du compte: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             return $this->error('Erreur interne du serveur lors de la création du compte.', 500);
         }
     }

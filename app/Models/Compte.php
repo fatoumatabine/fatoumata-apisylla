@@ -74,8 +74,10 @@ class Compte extends Model
     // Attribut personnalisé pour le solde (calculé)
     public function getSoldeAttribute($value)
     {
-        // Pour l'instant, retourner la valeur stockée
-        // Plus tard, calculer : somme dépôts - somme retraits
-        return $value;
+        // Calculer le solde réel : somme dépôts - somme retraits
+        $debits = $this->transactions()->where('type', 'debit')->sum('montant');
+        $credits = $this->transactions()->where('type', 'credit')->sum('montant');
+
+        return $credits - $debits;
     }
 }
