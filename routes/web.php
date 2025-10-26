@@ -20,11 +20,13 @@ Route::get('/', function () {
 // Routes Swagger pour la documentation API
 Route::group(['middleware' => []], function () {
     Route::get('/api/documentation', function () {
-        return view('vendor.l5-swagger.index');
+        $documentation = 'default';
+        return view('vendor.l5-swagger.index', compact('documentation'));
     });
 
     Route::get('/docs', function () {
-        return view('vendor.l5-swagger.index');
+        $documentation = 'default';
+        return view('vendor.l5-swagger.index', compact('documentation'));
     });
 });
 
