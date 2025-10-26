@@ -21,12 +21,31 @@ Route::get('/', function () {
 Route::group(['middleware' => []], function () {
     Route::get('/api/documentation', function () {
         $documentation = 'default';
-        return view('vendor.l5-swagger.index', compact('documentation'));
+        $urlToDocs = url('/api/docs');
+        $configUrl = null;
+        $validatorUrl = null;
+        $useAbsolutePath = true;
+        $operationsSorter = null;
+        return view('vendor.l5-swagger.index', compact('documentation', 'urlToDocs', 'configUrl', 'validatorUrl', 'useAbsolutePath', 'operationsSorter'));
     });
 
     Route::get('/docs', function () {
         $documentation = 'default';
-        return view('vendor.l5-swagger.index', compact('documentation'));
+        $urlToDocs = url('/api/docs');
+        $configUrl = null;
+        $validatorUrl = null;
+        $useAbsolutePath = true;
+        $operationsSorter = null;
+        return view('vendor.l5-swagger.index', compact('documentation', 'urlToDocs', 'configUrl', 'validatorUrl', 'useAbsolutePath', 'operationsSorter'));
+    });
+
+    // Route pour servir le fichier JSON de documentation
+    Route::get('/api/docs', function () {
+        $path = storage_path('api-docs/api-docs.json');
+        if (file_exists($path)) {
+            return response()->file($path, ['Content-Type' => 'application/json']);
+        }
+        return response()->json(['error' => 'Documentation not found'], 404);
     });
 });
 
