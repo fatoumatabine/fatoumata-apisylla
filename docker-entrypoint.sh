@@ -40,6 +40,9 @@ php artisan l5-swagger:publish
 echo "Generating Swagger documentation..."
 php artisan l5-swagger:generate
 
+echo "Testing API endpoint..."
+curl -s https://fatoumata-apisylla-1.onrender.com/api/v1/comptes | jq .data | head -5
+
 echo "Clearing cache..."
 php artisan config:clear
 php artisan cache:clear
