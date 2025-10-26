@@ -17,3 +17,14 @@ Route::get('/', function () {
     return 'API Comptes - Bienvenue ! Utilisez /api/v1/comptes pour accéder aux comptes.';
 });
 
+// Routes Swagger pour la documentation API
+Route::group(['middleware' => []], function () {
+    Route::get('/api/documentation', function () {
+        return view('vendor.l5-swagger.index');
+    });
+
+    Route::get('/docs', function () {
+        return view('vendor.l5-swagger.index');
+    });
+});
+
