@@ -1,0 +1,476 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Comptes - Système de Gestion Bancaire",
+        "description": "API REST pour la gestion des comptes bancaires avec authentification et validation avancée",
+        "contact": {
+            "email": "fatoumata.sylla@example.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Serveur API"
+        }
+    ],
+    "paths": {
+        "/api/v1/comptes": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Obtenir la liste des comptes",
+                "description": "Retourne la liste des comptes avec des options de filtrage, recherche et pagination.",
+                "operationId": "getComptesList",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de compte (e.g., 'courant', 'epargne')",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer par statut de compte (e.g., 'actif', 'bloque', 'ferme')",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Rechercher par titulaire ou numéro de compte",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Champ de tri (e.g., 'dateCreation', 'solde')",
+                        "schema": {
+                            "type": "string",
+                            "default": "dateCreation"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre de tri ('asc' ou 'desc')",
+                        "schema": {
+                            "type": "string",
+                            "default": "desc"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opération réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Liste des comptes récupérée avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CompteResource"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "type": "object"
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Créer un nouveau compte",
+                "description": "Crée un nouveau compte bancaire, avec la possibilité de créer un nouveau client si nécessaire.",
+                "operationId": "storeCompte",
+                "requestBody": {
+                    "description": "Données du compte à créer",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "solde",
+                                    "devise",
+                                    "client"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "description": "Type de compte (e.g., 'courant', 'epargne')",
+                                        "type": "string",
+                                        "example": "courant"
+                                    },
+                                    "solde": {
+                                        "description": "Solde initial du compte",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1000
+                                    },
+                                    "devise": {
+                                        "description": "Devise du compte (e.g., 'XOF', 'EUR', 'USD')",
+                                        "type": "string",
+                                        "example": "XOF"
+                                    },
+                                    "client": {
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID du client existant (optionnel)",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "titulaire": {
+                                                "description": "Nom du titulaire (requis si nouveau client)",
+                                                "type": "string",
+                                                "example": "John Doe"
+                                            },
+                                            "nci": {
+                                                "description": "Numéro de carte d'identité (requis si nouveau client)",
+                                                "type": "string",
+                                                "example": "1234567890123"
+                                            },
+                                            "email": {
+                                                "description": "Email du client (requis si nouveau client)",
+                                                "type": "string",
+                                                "format": "email",
+                                                "example": "john.doe@example.com"
+                                            },
+                                            "telephone": {
+                                                "description": "Numéro de téléphone du client (requis si nouveau client)",
+                                                "type": "string",
+                                                "example": "771234567"
+                                            },
+                                            "adresse": {
+                                                "description": "Adresse du client (requis si nouveau client)",
+                                                "type": "string",
+                                                "example": "123 Rue Principale"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Compte créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte créé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CompteResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur interne du serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur interne du serveur lors de la création du compte."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/comptes/archived": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Obtenir la liste des comptes archivés",
+                "description": "Retourne la liste des comptes archivés avec des options de recherche et pagination.",
+                "operationId": "getArchivedComptesList",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Rechercher par titulaire ou numéro de compte",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Champ de tri (e.g., 'dateCreation', 'solde')",
+                        "schema": {
+                            "type": "string",
+                            "default": "dateCreation"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre de tri ('asc' ou 'desc')",
+                        "schema": {
+                            "type": "string",
+                            "default": "desc"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opération réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Liste des comptes archivés récupérée avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CompteResource"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "type": "object"
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CompteResource": {
+                "title": "Compte Resource",
+                "description": "Représentation d'un compte bancaire",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": "true",
+                        "example": 1
+                    },
+                    "numeroCompte": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "C12345678"
+                    },
+                    "titulaire": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "John Doe"
+                    },
+                    "type": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "courant"
+                    },
+                    "solde": {
+                        "type": "number",
+                        "format": "float",
+                        "readOnly": "true",
+                        "example": 1000
+                    },
+                    "devise": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "XOF"
+                    },
+                    "dateCreation": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": "true",
+                        "example": "2025-10-26T12:00:00Z"
+                    },
+                    "statut": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "actif"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "readOnly": "true",
+                        "example": []
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "readOnly": "true",
+                        "example": 1
+                    },
+                    "client_name": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "Nom Prénom Client"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Authentification Bearer Token pour accéder aux endpoints protégés",
+                "name": "bearerAuth",
+                "in": "header",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Comptes",
+            "description": "Comptes"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ]
+}

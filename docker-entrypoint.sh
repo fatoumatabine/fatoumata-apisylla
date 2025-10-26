@@ -31,5 +31,20 @@ done
 echo "Database is up - executing migrations"
 php artisan migrate --force
 
+echo "Running database seeders..."
+php artisan db:seed --force
+
+echo "Publishing Swagger assets..."
+php artisan l5-swagger:publish
+
+echo "Generating Swagger documentation..."
+php artisan l5-swagger:generate
+
+echo "Clearing cache..."
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+
 echo "Starting Laravel application..."
 exec php artisan serve --host=0.0.0.0 --port=8000

@@ -9,12 +9,99 @@ use App\Http\Resources\CompteResource;
 use App\Http\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @OA\Info(
+ *      version="1.0.0",
+ *      title="API Comptes - Système de Gestion Bancaire",
+ *      description="API REST pour la gestion des comptes bancaires avec authentification et validation avancée",
+ *      @OA\Contact(
+ *          email="fatoumata.sylla@example.com"
+ *      )
+ * )
+ *
+ * @OA\Server(
+ *      url=L5_SWAGGER_CONST_HOST,
+ *      description="Serveur API"
+ * )
+ *
+ * @OA\SecurityScheme(
+ *     type="http",
+ *     description="Authentification Bearer Token pour accéder aux endpoints protégés",
+ *     name="bearerAuth",
+ *     in="header",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     securityScheme="bearerAuth",
+ * )
+ */
 class CompteController extends Controller
 {
     use ApiResponseTrait;
 
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *      path="/api/v1/comptes",
+     *      operationId="getComptesList",
+     *      tags={"Comptes"},
+     *      summary="Obtenir la liste des comptes",
+     *      description="Retourne la liste des comptes avec des options de filtrage, recherche et pagination.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="type",
+     *          in="query",
+     *          description="Filtrer par type de compte (e.g., 'courant', 'epargne')",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Parameter(
+     *          name="statut",
+     *          in="query",
+     *          description="Filtrer par statut de compte (e.g., 'actif', 'bloque', 'ferme')",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Parameter(
+     *          name="search",
+     *          in="query",
+     *          description="Rechercher par titulaire ou numéro de compte",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Parameter(
+     *          name="sort",
+     *          in="query",
+     *          description="Champ de tri (e.g., 'dateCreation', 'solde')",
+     *          @OA\Schema(type="string", default="dateCreation")
+     *      ),
+     *      @OA\Parameter(
+     *          name="order",
+     *          in="query",
+     *          description="Ordre de tri ('asc' ou 'desc')",
+     *          @OA\Schema(type="string", default="desc")
+     *      ),
+     *      @OA\Parameter(
+     *          name="limit",
+     *          in="query",
+     *          description="Nombre d'éléments par page",
+     *          @OA\Schema(type="integer", default=10)
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Opération réussie",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Liste des comptes récupérée avec succès"),
+     *              @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CompteResource")),
+     *              @OA\Property(property="pagination", type="object"),
+     *              @OA\Property(property="links", type="object")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
      */
     public function index(Request $request)
     {
@@ -53,8 +140,59 @@ class CompteController extends Controller
     }
 
     /**
-    * Store a newly created resource in storage.
-    */
+     * @OA\Post(
+     *      path="/api/v1/comptes",
+     *      operationId="storeCompte",
+     *      tags={"Comptes"},
+     *      summary="Créer un nouveau compte",
+     *      description="Crée un nouveau compte bancaire, avec la possibilité de créer un nouveau client si nécessaire.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          description="Données du compte à créer",
+     *          @OA\JsonContent(
+     *              required={"type","solde","devise","client"},
+     *              @OA\Property(property="type", type="string", example="courant", description="Type de compte (e.g., 'courant', 'epargne')"),
+     *              @OA\Property(property="solde", type="number", format="float", example=1000.00, description="Solde initial du compte"),
+     *              @OA\Property(property="devise", type="string", example="XOF", description="Devise du compte (e.g., 'XOF', 'EUR', 'USD')"),
+     *              @OA\Property(property="client", type="object",
+     *                  @OA\Property(property="id", type="integer", example=1, description="ID du client existant (optionnel)"),
+     *                  @OA\Property(property="titulaire", type="string", example="John Doe", description="Nom du titulaire (requis si nouveau client)"),
+     *                  @OA\Property(property="nci", type="string", example="1234567890123", description="Numéro de carte d'identité (requis si nouveau client)"),
+     *                  @OA\Property(property="email", type="string", format="email", example="john.doe@example.com", description="Email du client (requis si nouveau client)"),
+     *                  @OA\Property(property="telephone", type="string", example="771234567", description="Numéro de téléphone du client (requis si nouveau client)"),
+     *                  @OA\Property(property="adresse", type="string", example="123 Rue Principale", description="Adresse du client (requis si nouveau client)")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Compte créé avec succès",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Erreur de validation",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *              @OA\Property(property="errors", type="object")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=500,
+     *          description="Erreur interne du serveur",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Erreur interne du serveur lors de la création du compte.")
+     *          )
+     *      )
+     * )
+     */
     public function store(StoreCompteRequest $request)
     {
         try {
@@ -92,8 +230,10 @@ class CompteController extends Controller
                 // Si le client est trouvé par email/téléphone, les données de la requête sont utilisées pour la création du compte.
             }
 
-            // Générer numéro de compte
-            $numeroCompte = 'C' . strtoupper(\Illuminate\Support\Str::random(9));
+            // Générer numéro de compte unique
+            do {
+                $numeroCompte = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+            } while (Compte::where('numeroCompte', $numeroCompte)->exists());
 
             // Créer le compte
             $compte = Compte::create([
@@ -112,14 +252,64 @@ class CompteController extends Controller
 
             return $this->success(new CompteResource($compte), 'Compte créé avec succès', 201);
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de la création du compte: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
+            Log::error('Erreur lors de la création du compte: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             return $this->error('Erreur interne du serveur lors de la création du compte.', 500);
         }
     }
 
     /**
-     * Display a listing of archived accounts.
+     * @OA\Get(
+     *      path="/api/v1/comptes/archived",
+     *      operationId="getArchivedComptesList",
+     *      tags={"Comptes"},
+     *      summary="Obtenir la liste des comptes archivés",
+     *      description="Retourne la liste des comptes archivés avec des options de recherche et pagination.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="search",
+     *          in="query",
+     *          description="Rechercher par titulaire ou numéro de compte",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Parameter(
+     *          name="sort",
+     *          in="query",
+     *          description="Champ de tri (e.g., 'dateCreation', 'solde')",
+     *          @OA\Schema(type="string", default="dateCreation")
+     *      ),
+     *      @OA\Parameter(
+     *          name="order",
+     *          in="query",
+     *          description="Ordre de tri ('asc' ou 'desc')",
+     *          @OA\Schema(type="string", default="desc")
+     *      ),
+     *      @OA\Parameter(
+     *          name="limit",
+     *          in="query",
+     *          description="Nombre d'éléments par page",
+     *          @OA\Schema(type="integer", default=10)
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Opération réussie",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Liste des comptes archivés récupérée avec succès"),
+     *              @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CompteResource")),
+     *              @OA\Property(property="pagination", type="object"),
+     *              @OA\Property(property="links", type="object")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
      */
      public function archived(Request $request)
      {
