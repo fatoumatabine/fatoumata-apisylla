@@ -13,6 +13,6 @@ class NonArchivedScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        $builder->whereNull('deleted_at');
+        $builder->where('archived', false);
     }
 }
