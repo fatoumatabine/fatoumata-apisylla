@@ -34,9 +34,6 @@ php artisan migrate --force
 echo "Running database seeders..."
 php artisan db:seed --force
 
-echo "Publishing Swagger assets..."
-php artisan l5-swagger:publish
-
 echo "Generating Swagger documentation..."
 php artisan l5-swagger:generate
 
