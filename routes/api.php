@@ -212,16 +212,83 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
       *             )
       *         )
       *     ),
-      *     @OA\Response(
-      *         response=400,
-      *         description="Erreur de requête",
-      *         @OA\JsonContent(
-      *             @OA\Property(property="success", type="boolean", example=false),
-      *             @OA\Property(property="message", type="string", example="Erreur de requête"),
-      *             @OA\Property(property="errors", type="object")
-      *         )
-      *     )
-      * )
-      */
-     Route::get('/comptes/archived', [CompteController::class, 'archived']);
+     *     @OA\Response(
+     *         response=400,
+     *         description="Erreur de requête",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur de requête"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
+    Route::get('/comptes/archived', [CompteController::class, 'archived']);
+    Route::get('/comptes/{id}', [CompteController::class, 'show']);
+    Route::delete('/comptes/{id}', [CompteController::class, 'destroy']);
+    Route::patch('/comptes/{id}/block', [CompteController::class, 'block']);
+    Route::patch('/comptes/{id}/unblock', [CompteController::class, 'unblock']);
+    /**
+     * @OA\Patch(
+     *      path="/api/v1/comptes/{compteId}",
+     *      operationId="updateCompte",
+     *      tags={"Comptes"},
+     *      summary="Modifier les informations d'un compte",
+     *      description="Met à jour les informations d'un compte et de son client associé. Tous les champs sont optionnels, mais au moins un champ de modification doit être fourni.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="compteId",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte à modifier",
+     *          @OA\Schema(type="string", format="uuid")
+     *      ),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          description="Champs à modifier (au moins un requis)",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="titulaire", type="string", example="Amadou Diallo Junior", description="Nouveau nom du titulaire (optionnel)"),
+     *              @OA\Property(property="informationsClient", type="object",
+     *                  @OA\Property(property="telephone", type="string", example="+221771234568", description="Nouveau numéro de téléphone (optionnel)"),
+     *                  @OA\Property(property="email", type="string", format="email", example="amadou.diallo.jr@example.com", description="Nouvel email (optionnel)"),
+     *                  @OA\Property(property="password", type="string", format="password", example="NewSecurePassword123!", description="Nouveau mot de passe (optionnel)")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Compte mis à jour avec succès",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte mis à jour avec succès"),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=400,
+     *          description="Données invalides ou aucun champ de modification fourni",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="error", type="object",
+     *                  @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                  @OA\Property(property="message", type="string", example="Au moins un champ de modification est requis."),
+     *                  @OA\Property(property="details", type="object")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="error", type="object",
+     *                  @OA\Property(property="code", type="string", example="COMPTE_NOT_FOUND"),
+     *                  @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    Route::patch('/comptes/{compteId}', [CompteController::class, 'update']); // Temporairement désactivé le middleware 'logging' pour le test
 });

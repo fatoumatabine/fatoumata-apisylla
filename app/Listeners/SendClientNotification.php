@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use Twilio\Rest\Client; // Importer la classe Twilio Client
+use Twilio\Rest\Client; // Ajout de l'import pour Twilio
 
 class SendClientNotification implements ShouldQueue
 {
@@ -31,11 +31,16 @@ class SendClientNotification implements ShouldQueue
         $code = $event->code;
 
         // Envoyer email d'authentification
+        /*
         Mail::raw("Votre compte a été créé. Mot de passe : $password. Utilisez ce mot de passe pour vous connecter.", function ($message) use ($client) {
             $message->to($client->email)->subject('Authentification Compte');
         });
+        */
 
-        // Envoyer SMS avec le code via Twilio
+        // Envoyer SMS avec le code (ici, on log car pas de service SMS)
+        Log::info("SMS envoyé à {$client->telephone} : Votre code d'authentification est : $code");
+        /*
+        // Si Twilio est configuré, vous pouvez décommenter et utiliser ce bloc
         try {
             $twilioSid = env('TWILIO_SID');
             $twilioToken = env('TWILIO_TOKEN');
@@ -57,5 +62,6 @@ class SendClientNotification implements ShouldQueue
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'envoi du SMS à {$client->telephone} via Twilio: " . $e->getMessage());
         }
+        */
     }
 }

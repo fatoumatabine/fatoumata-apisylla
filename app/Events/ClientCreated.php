@@ -17,7 +17,7 @@ public $code;
 /**
 * Create a new event instance.
 */
-public function __construct(Client $client, string $password, string $code)
+public function __construct(Client $client, ?string $password = null, ?string $code = null)
 {
 $this->client = $client;
     $this->password = $password;
