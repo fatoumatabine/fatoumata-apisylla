@@ -14,8 +14,10 @@ FROM php:8.3-fpm-alpine
 
 # Installer les extensions PHP nécessaires et netcat pour les vérifications de connectivité
 RUN apk add --no-cache postgresql-dev postgresql-client netcat-openbsd jq \
-&& docker-php-ext-install pdo pdo_pgsql
-    # Créer un utilisateur non-root
+&& docker-php-ext-install pdo pdo_pgsql \
+&& echo "memory_limit = 512M" > /usr/local/etc/php/conf.d/memory-limit.ini
+
+# Créer un utilisateur non-root
 RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
 
 # Définir le répertoire de travail
@@ -32,7 +34,8 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
     && mkdir -p storage/logs \
     && mkdir -p bootstrap/cache \
     && chown -R laravel:laravel /var/www/html \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    && ls -la /var/www/html/vendor # Vérifier les permissions après la copie
 
 # Les commandes de génération de clé et de cache seront gérées par Render ou au démarrage de l'application.
 
