@@ -7,21 +7,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Twilio\Rest\Client; // Importer la classe Twilio Client
 
 class SendClientNotification implements ShouldQueue
 {
-use InteractsWithQueue;
+    use InteractsWithQueue;
 
-/**
- * Create the event listener.
+    /**
+     * Create the event listener.
      */
-public function __construct()
-{
-   //
-}
+    public function __construct()
+    {
+        //
+    }
 
-/**
- * Handle the event.
+    /**
+     * Handle the event.
      */
     public function handle(ClientCreated $event): void
     {
@@ -34,7 +35,27 @@ public function __construct()
             $message->to($client->email)->subject('Authentification Compte');
         });
 
-        // Envoyer SMS avec le code (ici, on log car pas de service SMS)
-        Log::info("SMS envoyé à {$client->telephone} : Votre code d'authentification est : $code");
+        // Envoyer SMS avec le code via Twilio
+        try {
+            $twilioSid = env('TWILIO_SID');
+            $twilioToken = env('TWILIO_TOKEN');
+            $twilioFrom = env('TWILIO_FROM');
+
+            if ($twilioSid && $twilioToken && $twilioFrom) {
+                $twilio = new Client($twilioSid, $twilioToken);
+                $twilio->messages->create(
+                    $client->telephone, // Numéro de téléphone du destinataire
+                    [
+                        'from' => $twilioFrom, // Votre numéro Twilio
+                        'body' => "Votre code d'authentification est : $code",
+                    ]
+                );
+                Log::info("SMS envoyé à {$client->telephone} via Twilio.");
+            } else {
+                Log::warning("Variables d'environnement Twilio non configurées. SMS non envoyé à {$client->telephone}.");
+            }
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi du SMS à {$client->telephone} via Twilio: " . $e->getMessage());
+        }
     }
 }

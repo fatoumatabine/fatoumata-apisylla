@@ -24,39 +24,23 @@ class StoreCompteRequest extends FormRequest
     {
         return [
             'type' => 'required|in:epargne,cheque',
-            'soldeInitial' => 'nullable|numeric|min:0', // peut-être pas utilisé, mais dans le body
+            'soldeInitial' => 'required|numeric|min:0', // Rendu obligatoire
             'devise' => 'required|string|size:3',
             'solde' => 'required|numeric|min:10000',
             'client' => 'required|array',
             'client.id' => 'nullable|integer|exists:clients,id',
-            'client.titulaire' => 'nullable|string|max:255',
-            'client.nci' => 'nullable|string',
-            'client.email' => 'nullable|email',
-            'client.telephone' => 'nullable|string',
-            'client.adresse' => 'nullable|string',
+            'client.titulaire' => 'required_without:client.id|string|max:255', // Requis si pas d'ID client
+            'client.nci' => 'required_without:client.id|string|unique:clients,nci|regex:/^\d{13}$/', // Requis si pas d'ID client
+            'client.email' => 'required_without:client.id|email|unique:clients,email', // Requis si pas d'ID client
+            'client.telephone' => 'required_without:client.id|string|unique:clients,telephone|regex:/^(\+221|221)?7[0678]\d{7}$/', // Requis si pas d'ID client
+            'client.adresse' => 'required_without:client.id|string', // Requis si pas d'ID client
         ];
     }
 
     public function withValidator($validator)
     {
-        $validator->sometimes('client.titulaire', 'required', function ($input) {
-            return !isset($input->client['id']);
-        });
-
-        $validator->sometimes('client.nci', 'required|unique:clients,nci|regex:/^\d{13}$/', function ($input) {
-            return !isset($input->client['id']);
-        });
-
-        $validator->sometimes('client.email', 'required|email|unique:clients,email', function ($input) {
-            return !isset($input->client['id']);
-        });
-
-        $validator->sometimes('client.telephone', 'required|unique:clients,telephone|regex:/^(\+221|221)?7[0678]\d{7}$/', function ($input) {
-            return !isset($input->client['id']);
-        });
-
-        $validator->sometimes('client.adresse', 'required', function ($input) {
-            return !isset($input->client['id']);
-        });
+        // Les règles 'required_without:client.id' gèrent déjà la logique conditionnelle.
+        // Les règles 'unique' sont appliquées si le champ est présent et non nul.
+        // Pas besoin de 'sometimes' ici car 'required_without' est plus direct.
     }
 }
