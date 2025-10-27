@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanctum'
     /**
      * @OA\Get(
-     *     path="/comptes",
+     *     path="/api/v1/comptes",
      *     summary="Lister tous les comptes non archivés",
      *     tags={"Comptes"},
      *     security={{"bearerAuth": {}}},
@@ -106,7 +106,7 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
 
     /**
     * @OA\Post(
-    *     path="/comptes",
+    *     path="/api/v1/comptes",
     *     summary="Créer un nouveau compte",
     *     tags={"Comptes"},
     *     @OA\RequestBody(
@@ -155,7 +155,7 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
 
     /**
     * @OA\Get(
-    *     path="/comptes/archived",
+    *     path="/api/v1/comptes/archived",
     *     summary="Lister tous les comptes archivés",
     *     tags={"Comptes"},
     *     security={{"bearerAuth": {}}},

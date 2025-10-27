@@ -36,6 +36,7 @@ php artisan db:seed --force
 
 echo "Generating Swagger documentation..."
 php artisan l5-swagger:generate
+ls -l storage/api-docs/
 
 echo "Testing API endpoint..."
 curl -s https://fatoumata-apisylla-1.onrender.com/api/v1/comptes | jq .data | head -5
