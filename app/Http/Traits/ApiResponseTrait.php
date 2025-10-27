@@ -30,15 +30,30 @@ trait ApiResponseTrait
      *
      * @param string $message
      * @param int $statusCode
-     * @param array $errors
+     * @param string $errorCode
+     * @param array $details
+     * @param string|null $path
+     * @param string|null $traceId
      * @return JsonResponse
      */
-    protected function error(string $message = 'Error', int $statusCode = 400, array $errors = []): JsonResponse
-    {
+    protected function error(
+        string $message = 'Error',
+        int $statusCode = 400,
+        string $errorCode = 'GENERIC_ERROR',
+        array $details = [],
+        ?string $path = null,
+        ?string $traceId = null
+    ): JsonResponse {
         return new JsonResponse([
             'success' => false,
-            'message' => $message,
-            'errors' => $errors,
+            'error' => [
+                'code' => $errorCode,
+                'message' => $message,
+                'details' => $details,
+                'timestamp' => now()->toIso8601String(),
+                'path' => $path ?? request()->fullUrl(),
+                'traceId' => $traceId ?? (string) \Illuminate\Support\Str::uuid(),
+            ],
         ], $statusCode);
     }
 

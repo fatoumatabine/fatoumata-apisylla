@@ -20,9 +20,7 @@ lservices:
           name: pgsql
           property: host
       - key: DB_PORT
-        fromDatabase:
-          name: pgsql
-          property: port
+        value: 5433
       - key: DB_DATABASE
         fromDatabase:
           name: pgsql

@@ -12,8 +12,8 @@ RUN composer install --optimize-autoloader --no-interaction --prefer-dist --no-s
 # Étape 2: Image finale pour l'application
 FROM php:8.3-fpm-alpine
 
-# Installer les extensions PHP nécessaires et netcat pour les vérifications de connectivité
-RUN apk add --no-cache postgresql-dev postgresql-client netcat-openbsd jq \
+# Installer les extensions PHP nécessaires, netcat et supervisor
+RUN apk add --no-cache postgresql-dev postgresql-client netcat-openbsd jq supervisor \
 && docker-php-ext-install pdo pdo_pgsql \
 && echo "memory_limit = 512M" > /usr/local/etc/php/conf.d/memory-limit.ini
 
@@ -42,6 +42,15 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
 # Copier le script d'entrée
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Copier la configuration Nginx
+COPY conf/nginx/nginx-site.conf /etc/nginx/conf.d/default.conf
+
+# Créer le répertoire pour les logs Nginx
+RUN mkdir -p /var/log/nginx && touch /var/log/nginx/access.log /var/log/nginx/error.log
+
+# Copier la configuration Supervisor
+COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Passer à l'utilisateur non-root
 USER laravel

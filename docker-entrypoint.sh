@@ -47,12 +47,15 @@ php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
-echo "Starting PHP-FPM and Nginx..."
-# Démarrer PHP-FPM en arrière-plan
-php-fpm -D
+echo "Starting Laravel application services via start.sh..."
+# Ajouter un délai pour s'assurer que tout est prêt avant de démarrer supervisord
+sleep 5
 
-# Démarrer Nginx en arrière-plan
-nginx
+# Exécuter start.sh qui démarre supervisord
+exec /bin/sh start.sh
 
-# Garder le conteneur en vie en attendant la fin des processus en arrière-plan
-wait -n
+# Afficher les logs de supervisord pour le débogage (si le conteneur reste en vie)
+echo "Supervisor logs for php-fpm:"
+cat /var/log/supervisor/php-fpm.log || echo "php-fpm log not found"
+echo "Supervisor logs for nginx:"
+cat /var/log/supervisor/nginx.log || echo "nginx log not found"

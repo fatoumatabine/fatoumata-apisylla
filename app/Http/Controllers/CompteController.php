@@ -251,10 +251,12 @@ class CompteController extends Controller
             \Illuminate\Support\Facades\Event::dispatch(new \App\Events\ClientCreated($client, $password ?? null, $code ?? null));
 
             return $this->success(new CompteResource($compte), 'Compte créé avec succès', 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->error('Validation failed', 422, 'VALIDATION_ERROR', $e->errors(), $request->fullUrl());
         } catch (\Exception $e) {
             Log::error('Erreur lors de la création du compte: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
-            return $this->error('Erreur interne du serveur lors de la création du compte.', 500);
+            return $this->error('Erreur interne du serveur lors de la création du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()], $request->fullUrl(), (string) \Illuminate\Support\Str::uuid());
         }
     }
 

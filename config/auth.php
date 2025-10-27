@@ -14,7 +14,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'web',
+        'guard' => 'api', // Changer le guard par défaut pour l'API
         'passwords' => 'users',
     ],
 
@@ -42,6 +42,10 @@ return [
         ],
         'sanctum' => [
             'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
+        'api' => [ // Ajouter le guard Passport
+            'driver' => 'passport',
             'provider' => 'users',
         ],
     ],
