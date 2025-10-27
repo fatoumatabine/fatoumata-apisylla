@@ -44,17 +44,27 @@ trait ApiResponseTrait
         ?string $path = null,
         ?string $traceId = null
     ): JsonResponse {
-        return new JsonResponse([
+        $response = [
             'success' => false,
+            'message' => $message,
             'error' => [
                 'code' => $errorCode,
-                'message' => $message,
-                'details' => $details,
                 'timestamp' => now()->toIso8601String(),
                 'path' => $path ?? request()->fullUrl(),
                 'traceId' => $traceId ?? (string) \Illuminate\Support\Str::uuid(),
             ],
-        ], $statusCode);
+        ];
+
+        if (!empty($details)) {
+            // Si les détails sont des erreurs de validation, les placer directement sous 'errors'
+            if ($errorCode === 'VALIDATION_ERROR') {
+                $response['errors'] = $details;
+            } else {
+                $response['error']['details'] = $details;
+            }
+        }
+
+        return new JsonResponse($response, $statusCode);
     }
 
     /**

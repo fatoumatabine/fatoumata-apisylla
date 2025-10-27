@@ -9,6 +9,7 @@ use App\Jobs\ArchiveExpiredBlockedAccounts;
 use App\Jobs\UnarchiveExpiredBlockedAccounts;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log; // Ajouter l'importation de Log
 
 class AccountArchivingJobsTest extends TestCase
 {
@@ -64,6 +65,16 @@ class AccountArchivingJobsTest extends TestCase
             'date_fin_blocage' => Carbon::now()->subDay(),
             'archived' => true,
         ]);
+        $compte->delete(); // Soft delete le compte pour qu'il soit "archivé"
+        
+
+
+        // Vérifier que le compte est bien soft-deleted et archivé dans la base de données
+        $this->assertDatabaseHas('comptes', [
+            'id' => $compte->id,
+            'archived' => true,
+            'deleted_at' => $compte->deleted_at->toDateTimeString(), // Assurez-vous que deleted_at est non null
+        ]);
 
         // Créer des transactions archivées pour ce compte
         Transaction::factory()->count(3)->create([
@@ -75,13 +86,17 @@ class AccountArchivingJobsTest extends TestCase
         (new UnarchiveExpiredBlockedAccounts())->handle();
 
         // Vérifier que le compte est désarchivé et les dates de blocage sont nulles
-        $this->assertFalse($compte->fresh()->archived);
-        $this->assertNull($compte->fresh()->date_debut_blocage);
-        $this->assertNull($compte->fresh()->date_fin_blocage);
+        $compte = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)->find($compte->id);
+        $this->assertNotNull($compte); // S'assurer que le compte n'est pas null
+        $this->assertFalse($compte->archived);
+        $this->assertNull($compte->date_debut_blocage);
+        $this->assertNull($compte->date_fin_blocage);
+        $this->assertNull($compte->deleted_at); // S'assurer qu'il est restauré
+        $this->assertFalse($compte->trashed()); // S'assurer qu'il n'est plus soft-deleted
 
         // Vérifier que toutes les transactions du compte sont désarchivées
         $compte->transactions->each(function ($transaction) {
-            $this->assertFalse($transaction->fresh()->archived);
+        $this->assertFalse($transaction->fresh()->archived);
         });
 
         // Créer un compte archivé mais dont la date de fin de blocage n'est pas échue
@@ -90,7 +105,11 @@ class AccountArchivingJobsTest extends TestCase
             'date_fin_blocage' => Carbon::now()->addDay(),
             'archived' => true,
         ]);
+        $compteStillArchived->delete(); // Soft delete le compte pour qu'il soit "archivé"
         (new UnarchiveExpiredBlockedAccounts())->handle();
-        $this->assertTrue($compteStillArchived->fresh()->archived);
+        $compteStillArchived = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)->withTrashed()->find($compteStillArchived->id); // Ce compte devrait rester soft-deleted
+        $this->assertNotNull($compteStillArchived); // S'assurer que le compte n'est pas null
+        $this->assertTrue($compteStillArchived->archived);
+        $this->assertNotNull($compteStillArchived->deleted_at); // S'assurer qu'il est toujours soft-deleted
     }
 }

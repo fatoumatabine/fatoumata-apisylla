@@ -28,8 +28,9 @@ class ArchiveExpiredBlockedAccounts implements ShouldQueue
      */
     public function handle(): void
     {
-        $comptesToArchive = Compte::where('date_debut_blocage', '<=', Carbon::now())
-                                  ->where('archived', false)
+        $comptesToArchive = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)
+        ->where('date_debut_blocage', '<=', Carbon::now())
+        ->where('archived', false)
                                   ->get();
 
         foreach ($comptesToArchive as $compte) {

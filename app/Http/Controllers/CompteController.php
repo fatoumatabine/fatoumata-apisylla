@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Compte;
 use Illuminate\Http\Request;
-use App\Http\Requests\StoreCompteRequest; // Assuming this is for creation, not listing
+use App\Http\Requests\StoreCompteRequest;
 use App\Http\Resources\CompteResource;
 use App\Http\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\UpdateCompteRequest;
 
 /**
  * @OA\Info(
@@ -200,19 +201,23 @@ class CompteController extends Controller
 
             // Vérifier si le client existe
             $client = null;
-            if (isset($data['client']['id'])) {
-                $client = \App\Models\Client::find($data['client']['id']);
-            } else {
-                // Chercher par email ou téléphone
-                $client = \App\Models\Client::where('email', $data['client']['email'])
-                    ->orWhere('telephone', $data['client']['telephone'])
-                    ->first();
-            }
 
-            if (!$client) {
-                // Créer le client avec mot de passe et code générés
+            $password = null;
+            $code = null;
+
+            if (isset($data['client']['id'])) {
+                $clientId = $data['client']['id'];
+                Log::info('Tentative de trouver un client existant par ID: ' . $clientId);
+                $client = \App\Models\Client::find($clientId);
+                if (!$client) {
+                    Log::warning('Client non trouvé pour l\'ID: ' . $clientId);
+                    return $this->error('Client non trouvé.', 404, 'CLIENT_NOT_FOUND');
+                }
+                Log::info('Client existant trouvé par ID: ' . $client->id);
+            } else {
+                Log::info('client.id non fourni. Tentative de créer un nouveau client.');
                 $password = \Illuminate\Support\Str::random(8);
-                $code = \Illuminate\Support\Str::random(6); // ou random_int(100000, 999999)
+                $code = \Illuminate\Support\Str::random(6);
 
                 $client = \App\Models\Client::create([
                     'titulaire' => $data['client']['titulaire'],
@@ -220,14 +225,10 @@ class CompteController extends Controller
                     'email' => $data['client']['email'],
                     'telephone' => $data['client']['telephone'],
                     'adresse' => $data['client']['adresse'],
-                    'password' => bcrypt($password),
+                    'password' => $password,
                     'code' => $code,
                 ]);
-            } else {
-                // Si le client existe, assurez-vous que les données du client dans la requête correspondent
-                // ou mettez à jour si nécessaire (selon la logique métier)
-                // Pour l'instant, nous supposons que si un ID est fourni, les autres champs sont pour information ou ignorés.
-                // Si le client est trouvé par email/téléphone, les données de la requête sont utilisées pour la création du compte.
+                Log::info('Nouveau client créé avec ID: ' . $client->id);
             }
 
             // Générer numéro de compte unique
@@ -238,9 +239,9 @@ class CompteController extends Controller
             // Créer le compte
             $compte = Compte::create([
                 'numeroCompte' => $numeroCompte,
-                'titulaire' => $client->titulaire, // Utiliser le titulaire du client trouvé ou créé
+                'titulaire' => $client->titulaire,
                 'type' => $data['type'],
-                'solde' => $data['solde'],
+                'solde' => $data['soldeInitial'],
                 'devise' => $data['devise'],
                 'statut' => 'actif',
                 'dateCreation' => now(),
@@ -248,14 +249,14 @@ class CompteController extends Controller
             ]);
 
             // Envoyer email et SMS (via event/listener)
-            \Illuminate\Support\Facades\Event::dispatch(new \App\Events\ClientCreated($client, $password ?? null, $code ?? null));
+            \Illuminate\Support\Facades\Event::dispatch(new \App\Events\ClientCreated($client, $password, $code));
 
             return $this->success(new CompteResource($compte), 'Compte créé avec succès', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Validation failed during account creation: ' . $e->getMessage(), ['errors' => $e->errors()]);
             return $this->error('Validation failed', 422, 'VALIDATION_ERROR', $e->errors(), $request->fullUrl());
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la création du compte: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
+            Log::error('Erreur lors de la création du compte: ' . $e->getMessage(), ['exception' => $e->getTraceAsString()]);
             return $this->error('Erreur interne du serveur lors de la création du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()], $request->fullUrl(), (string) \Illuminate\Support\Str::uuid());
         }
     }
@@ -338,4 +339,340 @@ class CompteController extends Controller
 
          return $this->paginate(CompteResource::collection($comptes), 'Liste des comptes archivés récupérée avec succès');
      }
- }
+
+    /**
+     * @OA\Get(
+     *      path="/api/v1/comptes/{id}",
+     *      operationId="getCompteById",
+     *      tags={"Comptes"},
+     *      summary="Obtenir un compte spécifique",
+     *      description="Retourne un compte bancaire par son ID.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte à récupérer",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Opération réussie",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte récupéré avec succès"),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function show(string $id)
+    {
+        try {
+            $compte = Compte::with('client')->find($id);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération du compte: ' . $e->getMessage());
+            return $this->error('Erreur interne du serveur lors de la récupération du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Mettre à jour les informations d'un compte et de son client.
+     *
+     * @param  \App\Http\Requests\UpdateCompteRequest  $request
+     * @param  string  $compteId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(UpdateCompteRequest $request, string $compteId)
+    {
+        try {
+            $compte = Compte::where('id', $compteId)->first();
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND', [], $request->fullUrl());
+            }
+
+            $data = $request->validated(); // Utilisation de la validation de la requête de formulaire
+
+            // La validation "au moins un champ de modification est requis" est maintenant gérée dans UpdateCompteRequest
+
+            // Mettre à jour le titulaire du compte
+            if (isset($data['titulaire'])) {
+                $compte->titulaire = $data['titulaire'];
+            }
+
+            // Mettre à jour les informations du client
+            if (isset($data['informationsClient'])) {
+                $client = $compte->client; // Supposons qu'un compte a toujours un client
+
+                if ($client) {
+                    if (isset($data['informationsClient']['telephone'])) {
+                        $client->telephone = $data['informationsClient']['telephone'];
+                    }
+                    if (isset($data['informationsClient']['email'])) {
+                        $client->email = $data['informationsClient']['email'];
+                    }
+                    if (isset($data['informationsClient']['password'])) {
+                        $client->password = bcrypt($data['informationsClient']['password']);
+                    }
+                    $client->save();
+                }
+            }
+
+            $compte->save();
+
+            return $this->success(new CompteResource($compte), 'Compte mis à jour avec succès', 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->error('Validation failed', 422, 'VALIDATION_ERROR', $e->errors(), $request->fullUrl());
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la mise à jour du compte: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return $this->error('Erreur interne du serveur lors de la mise à jour du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()], $request->fullUrl(), (string) \Illuminate\Support\Str::uuid());
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *      path="/api/v1/comptes/{id}",
+     *      operationId="deleteCompte",
+     *      tags={"Comptes"},
+     *      summary="Supprimer un compte",
+     *      description="Supprime (archive) un compte bancaire par son ID.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte à supprimer",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Compte supprimé avec succès",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte supprimé avec succès.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function destroy(string $id)
+    {
+        try {
+            $compte = Compte::find($id);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            $compte->delete(); // Utilise SoftDeletes
+
+            return $this->success(null, 'Compte supprimé avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la suppression du compte: ' . $e->getMessage());
+            return $this->error('Erreur interne du serveur lors de la suppression du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *      path="/api/v1/comptes/{id}/block",
+     *      operationId="blockCompte",
+     *      tags={"Comptes"},
+     *      summary="Bloquer un compte épargne",
+     *      description="Bloque un compte épargne spécifique pour une durée donnée.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte à bloquer",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          description="Date de fin de blocage",
+     *          @OA\JsonContent(
+     *              required={"date_fin_blocage"},
+     *              @OA\Property(property="date_fin_blocage", type="string", format="date-time", example="2025-12-31T23:59:59Z", description="Date et heure de fin du blocage")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Compte bloqué avec succès",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte bloqué avec succès."),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Erreur de validation ou compte non épargne",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Le compte n'est pas un compte épargne ou la date de fin de blocage est invalide.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function block(Request $request, string $id)
+    {
+        try {
+            $compte = Compte::find($id);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            if ($compte->type !== 'epargne') {
+                return $this->error('Seuls les comptes épargne peuvent être bloqués.', 422, 'INVALID_ACCOUNT_TYPE');
+            }
+
+            $request->validate([
+                'date_fin_blocage' => 'required|date|after:now',
+            ]);
+
+            $compte->statut = 'bloque';
+            $compte->date_debut_blocage = now();
+            $compte->date_fin_blocage = $request->input('date_fin_blocage');
+            $compte->save();
+
+            return $this->success(new CompteResource($compte), 'Compte bloqué avec succès.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->error('Validation failed', 422, 'VALIDATION_ERROR', $e->errors(), $request->fullUrl());
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du blocage du compte: ' . $e->getMessage());
+            return $this->error('Erreur interne du serveur lors du blocage du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *      path="/api/v1/comptes/{id}/unblock",
+     *      operationId="unblockCompte",
+     *      tags={"Comptes"},
+     *      summary="Débloquer un compte épargne",
+     *      description="Débloque un compte épargne spécifique.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte à débloquer",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Compte débloqué avec succès",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte débloqué avec succès."),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Compte non bloqué ou non épargne",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Le compte n'est pas bloqué ou n'est pas un compte épargne.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function unblock(string $id)
+    {
+        try {
+            $compte = Compte::find($id);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque') {
+                return $this->error('Le compte n\'est pas bloqué ou n\'est pas un compte épargne.', 422, 'INVALID_ACCOUNT_STATE');
+            }
+
+            $compte->statut = 'actif';
+            $compte->date_debut_blocage = null;
+            $compte->date_fin_blocage = null;
+            $compte->save();
+
+            return $this->success(new CompteResource($compte), 'Compte débloqué avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du déblocage du compte: ' . $e->getMessage());
+            return $this->error('Erreur interne du serveur lors du déblocage du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+        }
+    }
+}
