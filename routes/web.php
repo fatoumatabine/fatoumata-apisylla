@@ -21,7 +21,7 @@ Route::get('/', function () {
 Route::group(['middleware' => []], function () {
     Route::get('/api/documentation', function () {
         $documentation = 'default';
-        $urlToDocs = url('/api/docs');
+        $urlToDocs = secure_url('/api/docs');
         $configUrl = null;
         $validatorUrl = null;
         $useAbsolutePath = false;
@@ -31,7 +31,7 @@ Route::group(['middleware' => []], function () {
 
     Route::get('/docs', function () {
         $documentation = 'default';
-        $urlToDocs = url('/api/docs');
+        $urlToDocs = secure_url('/api/docs');
         $configUrl = null;
         $validatorUrl = null;
         $useAbsolutePath = false;
