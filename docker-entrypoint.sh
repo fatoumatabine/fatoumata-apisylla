@@ -47,5 +47,12 @@ php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
-echo "Starting Laravel application..."
-exec php artisan serve --host=0.0.0.0 --port=8000
+echo "Starting PHP-FPM and Nginx..."
+# Démarrer PHP-FPM en arrière-plan
+php-fpm -D
+
+# Démarrer Nginx en arrière-plan
+nginx
+
+# Garder le conteneur en vie en attendant la fin des processus en arrière-plan
+wait -n

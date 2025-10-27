@@ -38,7 +38,7 @@ lservices:
       - key: L5_SWAGGER_BASE_PATH
         value: https://fatoumata-apisylla-1.onrender.com/
       - key: L5_SWAGGER_USE_ABSOLUTE_PATH
-        value: false
+        value: true
       - key: L5_SWAGGER_CONST_HOST
         value: https://fatoumata-apisylla-1.onrender.com/
 
