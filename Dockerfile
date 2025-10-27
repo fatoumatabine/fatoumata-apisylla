@@ -13,8 +13,8 @@ RUN composer install --optimize-autoloader --no-interaction --prefer-dist --no-s
 FROM php:8.3-fpm-alpine
 
 # Installer les extensions PHP nécessaires et netcat pour les vérifications de connectivité
-RUN apk add --no-cache postgresql-dev postgresql-client netcat-openbsd \
-    && docker-php-ext-install pdo pdo_pgsql
+RUN apk add --no-cache postgresql-dev postgresql-client netcat-openbsd jq \
+&& docker-php-ext-install pdo pdo_pgsql
     # Créer un utilisateur non-root
 RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
 
