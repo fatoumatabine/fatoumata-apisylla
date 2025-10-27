@@ -24,7 +24,7 @@ Route::group(['middleware' => []], function () {
         $urlToDocs = url('/api/docs');
         $configUrl = null;
         $validatorUrl = null;
-        $useAbsolutePath = true;
+        $useAbsolutePath = false;
         $operationsSorter = null;
         return view('vendor.l5-swagger.index', compact('documentation', 'urlToDocs', 'configUrl', 'validatorUrl', 'useAbsolutePath', 'operationsSorter'));
     });
@@ -34,7 +34,7 @@ Route::group(['middleware' => []], function () {
         $urlToDocs = url('/api/docs');
         $configUrl = null;
         $validatorUrl = null;
-        $useAbsolutePath = true;
+        $useAbsolutePath = false;
         $operationsSorter = null;
         return view('vendor.l5-swagger.index', compact('documentation', 'urlToDocs', 'configUrl', 'validatorUrl', 'useAbsolutePath', 'operationsSorter'));
     });
@@ -43,13 +43,23 @@ Route::group(['middleware' => []], function () {
     Route::get('/api/docs', function () {
         $path = storage_path('api-docs/api-docs.json');
         if (file_exists($path)) {
-            return response()->file($path, ['Content-Type' => 'application/json']);
+            return response()->file($path, [
+                'Content-Type' => 'application/json',
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization'
+            ]);
         }
         // Générer la documentation si elle n'existe pas
         try {
             \Illuminate\Support\Facades\Artisan::call('l5-swagger:generate');
             if (file_exists($path)) {
-                return response()->file($path, ['Content-Type' => 'application/json']);
+                return response()->file($path, [
+                    'Content-Type' => 'application/json',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers' => 'Content-Type, Authorization'
+                ]);
             }
         } catch (\Exception $e) {
             // Ignore l'erreur et continue
