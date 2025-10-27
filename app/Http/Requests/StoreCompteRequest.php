@@ -32,7 +32,7 @@ class StoreCompteRequest extends FormRequest
             'client.titulaire' => 'required_without:client.id|string|max:255', // Requis si pas d'ID client
             'client.nci' => 'required_without:client.id|string|unique:clients,nci|regex:/^\d{13}$/', // Requis si pas d'ID client
             'client.email' => 'required_without:client.id|email|unique:clients,email', // Requis si pas d'ID client
-            'client.telephone' => 'required_without:client.id|string|unique:clients,telephone|regex:/^(\+221|221)?7[0678]\d{7}$/', // Requis si pas d'ID client
+            'client.telephone' => 'required_without:client.id|string|unique:clients,telephone|regex:/^(\+221|221)?7[0678]\d{7}$/', // Correction du délimiteur regex
             'client.adresse' => 'required_without:client.id|string', // Requis si pas d'ID client
         ];
     }
