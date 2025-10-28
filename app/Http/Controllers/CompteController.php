@@ -118,6 +118,12 @@ class CompteController extends Controller
             $query->where('statut', $request->input('statut'));
         }
 
+        // Filtrer par numéro de compte
+        if ($request->has('numeroCompte')) {
+            $numeroCompte = $request->input('numeroCompte');
+            $query->where('numeroCompte', $numeroCompte);
+        }
+
         // Recherche par titulaire ou numéro
         if ($request->has('search')) {
             $searchTerm = $request->input('search');

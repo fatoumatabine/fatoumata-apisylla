@@ -51,6 +51,12 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      *         @OA\Schema(type="string", enum={"actif", "bloque", "ferme"})
      *     ),
      *     @OA\Parameter(
+     *         name="numeroCompte",
+     *         in="query",
+     *         description="Filtrer par numéro de compte exact",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Recherche par titulaire ou numéro",
