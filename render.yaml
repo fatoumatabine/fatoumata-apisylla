@@ -60,8 +60,6 @@ lservices:
       # - key: TWILIO_TOKEN
       #   value: your_twilio_token # À remplacer par votre Token Twilio
       - key: TWILIO_FROM
-        key: TOKEN
-        key: SID
 
 
 

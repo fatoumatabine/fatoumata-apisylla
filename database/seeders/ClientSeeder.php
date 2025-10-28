@@ -13,6 +13,6 @@ class ClientSeeder extends Seeder
      */
     public function run(): void
     {
-        Client::factory()->count(5)->create();
+        // Client::factory()->count(5)->create(); // Désactivé pour éviter les erreurs de contrainte d'unicité sur Render
     }
 }
