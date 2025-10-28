@@ -155,7 +155,7 @@ class AccountManagementTest extends TestCase
                      'message' => 'Compte supprimé avec succès.',
                  ]);
 
-        $this->assertSoftDeleted('comptes', ['id' => $compte->id]);
+        $this->assertDatabaseMissing('comptes', ['id' => $compte->id]);
     }
 
     /** @test */

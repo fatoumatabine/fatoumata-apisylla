@@ -225,8 +225,8 @@ class CompteController extends Controller
                     'email' => $data['client']['email'],
                     'telephone' => $data['client']['telephone'],
                     'adresse' => $data['client']['adresse'],
-                    'password' => $password,
-                    'code' => $code,
+                    'password' => $password, // Le hachage est géré par le modèle Client
+                    'code' => $code, // Le hachage est géré par le modèle Client
                 ]);
                 Log::info('Nouveau client créé avec ID: ' . $client->id);
             }
@@ -241,7 +241,7 @@ class CompteController extends Controller
                 'numeroCompte' => $numeroCompte,
                 'titulaire' => $client->titulaire,
                 'type' => $data['type'],
-                'solde' => $data['soldeInitial'],
+                'solde' => $data['solde'], // Correction: utiliser 'solde' au lieu de 'soldeInitial'
                 'devise' => $data['devise'],
                 'statut' => 'actif',
                 'dateCreation' => now(),
@@ -316,7 +316,7 @@ class CompteController extends Controller
      */
      public function archived(Request $request)
      {
-     $query = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)->onlyTrashed(); // Retrieve only soft-deleted accounts
+     $query = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)->where('archived', true); // Récupérer uniquement les comptes archivés
 
          // Recherche par titulaire ou numéro
          if ($request->has('search')) {
@@ -503,7 +503,7 @@ class CompteController extends Controller
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
             }
 
-            $compte->delete(); // Utilise SoftDeletes
+            $compte->forceDelete(); // Supprime définitivement le compte
 
             return $this->success(null, 'Compte supprimé avec succès.');
         } catch (\Exception $e) {
@@ -673,6 +673,134 @@ class CompteController extends Controller
         } catch (\Exception $e) {
             Log::error('Erreur lors du déblocage du compte: ' . $e->getMessage());
             return $this->error('Erreur interne du serveur lors du déblocage du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *      path="/api/v1/comptes/{id}/archive",
+     *      operationId="archiveCompte",
+     *      tags={"Comptes"},
+     *      summary="Archiver un compte",
+     *      description="Archive un compte bancaire spécifique.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte à archiver",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Compte archivé avec succès",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte archivé avec succès."),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function archive(string $id)
+    {
+        try {
+            $compte = Compte::find($id);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            $compte->archived = true;
+            $compte->save();
+
+            // Archiver toutes les transactions associées
+            $compte->transactions()->update(['archived' => true]);
+
+            return $this->success(new CompteResource($compte), 'Compte archivé avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'archivage du compte: ' . $e->getMessage());
+            return $this->error('Erreur interne du serveur lors de l\'archivage du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *      path="/api/v1/comptes/{id}/unarchive",
+     *      operationId="unarchiveCompte",
+     *      tags={"Comptes"},
+     *      summary="Désarchiver un compte",
+     *      description="Désarchive un compte bancaire spécifique.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte à désarchiver",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Compte désarchivé avec succès",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte désarchivé avec succès."),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function unarchive(string $id)
+    {
+        try {
+            $compte = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)->find($id);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            $compte->archived = false;
+            $compte->save();
+
+            // Désarchiver toutes les transactions associées
+            $compte->transactions()->update(['archived' => false]);
+
+            return $this->success(new CompteResource($compte), 'Compte désarchivé avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du désarchivage du compte: ' . $e->getMessage());
+            return $this->error('Erreur interne du serveur lors du désarchivage du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
         }
     }
 }
