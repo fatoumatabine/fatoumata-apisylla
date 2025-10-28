@@ -1,4 +1,4 @@
-        <?php
+<?php
 
 namespace Tests\Feature;
 
@@ -35,7 +35,7 @@ class CompteCreationTest extends TestCase
 
         $compteData = [
             'type' => 'epargne',
-            'solde' => 50000, // Utiliser solde
+            'solde' => 50000,
             'devise' => 'XOF',
             'client' => $clientData,
         ];
@@ -89,7 +89,7 @@ class CompteCreationTest extends TestCase
 
         $this->assertDatabaseHas('comptes', [
             'type' => 'cheque',
-            'solde' => 100000,
+            'solde' => 100000, // Le solde est stocké comme 'solde' dans la base de données
             'devise' => 'EUR',
             'client_id' => $existingClient->id,
         ]);
@@ -104,7 +104,7 @@ class CompteCreationTest extends TestCase
     {
         $invalidCompteData = [
             'type' => 'invalid_type', // Type invalide
-            'solde' => -100, // Solde inférieur au minimum (0)
+            'solde' => 5000, // Solde inférieur au minimum (10000)
             'devise' => 'EU', // Devise de taille incorrecte
             'client' => [
                 'titulaire' => '', // Titulaire manquant

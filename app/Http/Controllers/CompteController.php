@@ -231,8 +231,8 @@ class CompteController extends Controller
                     'email' => $data['client']['email'],
                     'telephone' => $data['client']['telephone'],
                     'adresse' => $data['client']['adresse'],
-                    'password' => $password, // Le hachage est géré par le modèle Client
-                    'code' => $code, // Le hachage est géré par le modèle Client
+                    'password' => $password,
+                    'code' => $code,
                 ]);
                 Log::info('Nouveau client créé avec ID: ' . $client->id);
             }

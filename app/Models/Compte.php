@@ -80,4 +80,16 @@ class Compte extends Model
 
         return $credits - $debits;
     }
+
+    // Calculer le solde disponible (pour les vérifications)
+    public function getSoldeDisponibleAttribute()
+    {
+        // Pour les comptes épargne bloqués, le solde disponible peut être limité
+        if ($this->type === 'epargne' && $this->statut === 'bloque') {
+            // Logique métier pour les comptes bloqués
+            return 0; // Par exemple, pas de retrait possible sur comptes bloqués
+        }
+
+        return $this->solde;
+    }
 }

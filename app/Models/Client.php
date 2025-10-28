@@ -32,6 +32,7 @@ class Client extends Model
 
     protected $casts = [
         'password' => 'hashed',
+        'code' => 'hashed',
     ];
 
     protected static function boot()

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CompteController;
+use App\Http\Controllers\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,10 +15,6 @@ use App\Http\Controllers\CompteController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
 
 Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanctum'
     /**
@@ -299,4 +296,151 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      * )
      */
     Route::patch('/comptes/{compteId}', [CompteController::class, 'update']); // Temporairement désactivé le middleware 'logging' pour le test
-});
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/comptes/{compteId}/transactions",
+     *     summary="Lister les transactions d'un compte",
+     *     tags={"Transactions"},
+     *     @OA\Parameter(
+     *         name="compteId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filtrer par type (credit, debit)",
+     *         @OA\Schema(type="string", enum={"credit", "debit"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_from",
+     *         in="query",
+     *         description="Date de début (YYYY-MM-DD)",
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_to",
+     *         in="query",
+     *         description="Date de fin (YYYY-MM-DD)",
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filtrer par statut (pending, completed, failed)",
+     *         @OA\Schema(type="string", enum={"pending", "completed", "failed"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Nombre de transactions par page",
+     *         @OA\Schema(type="integer", default=50)
+     *     ),
+     *     @OA\Parameter(
+     *         name="include_archived",
+     *         in="query",
+     *         description="Inclure les transactions archivées (true/false)",
+     *         @OA\Schema(type="boolean", default=false)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des transactions récupérée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transactions récupérées avec succès"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur"
+     *     )
+     * )
+     */
+     Route::get('/comptes/{compteId}/transactions', [TransactionController::class, 'index']);
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/{compteId}/transactions",
+     *     summary="Créer une nouvelle transaction",
+     *     tags={"Transactions"},
+     *     @OA\Parameter(
+     *         name="compteId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"type", "montant"},
+     *             @OA\Property(property="type", type="string", enum={"credit", "debit"}, example="credit"),
+     *             @OA\Property(property="montant", type="number", format="float", example=10000),
+     *             @OA\Property(property="description", type="string", nullable=true, example="Dépôt initial")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Transaction créée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transaction créée avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur"
+     *     )
+     * )
+     */
+     Route::post('/comptes/{compteId}/transactions', [TransactionController::class, 'store']);
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/comptes/{compteId}/transactions/{transactionId}",
+     *     summary="Afficher une transaction spécifique",
+     *     tags={"Transactions"},
+     *     @OA\Parameter(
+     *         name="compteId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Parameter(
+     *         name="transactionId",
+     *         in="path",
+     *         required=true,
+     *         description="ID de la transaction",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Transaction trouvée",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transaction trouvée"),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Transaction non trouvée"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur"
+     *     )
+     * )
+     */
+     Route::get('/comptes/{compteId}/transactions/{transactionId}', [TransactionController::class, 'show']);
+ });

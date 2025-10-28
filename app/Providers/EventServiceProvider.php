@@ -15,11 +15,14 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
-        ],
-        \App\Events\ClientCreated::class => [
-            \App\Listeners\SendClientNotification::class,
+    Registered::class => [
+    SendEmailVerificationNotification::class,
+    ],
+    \App\Events\ClientCreated::class => [
+    \App\Listeners\SendClientNotification::class,
+    ],
+        \App\Events\TransactionCreated::class => [
+            \App\Listeners\SendTransactionNotification::class,
         ],
     ];
 
@@ -28,7 +31,8 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Enregistrer les observers
+        \App\Models\Transaction::observe(\App\Observers\TransactionObserver::class);
     }
 
     /**

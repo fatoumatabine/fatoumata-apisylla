@@ -48,14 +48,8 @@ php artisan route:clear
 php artisan view:clear
 
 echo "Starting Laravel application services via start.sh..."
-# Ajouter un délai pour s'assurer que tout est prêt avant de démarrer supervisord
-sleep 5
+# Ajouter un délai pour s'assurer que tout est prêt
+sleep 2
 
-# Exécuter start.sh qui démarre supervisord
+# Exécuter start.sh qui démarre Laravel
 exec /bin/sh start.sh
-
-# Afficher les logs de supervisord pour le débogage (si le conteneur reste en vie)
-echo "Supervisor logs for php-fpm:"
-cat /var/log/supervisor/php-fpm.log || echo "php-fpm log not found"
-echo "Supervisor logs for nginx:"
-cat /var/log/supervisor/nginx.log || echo "nginx log not found"
