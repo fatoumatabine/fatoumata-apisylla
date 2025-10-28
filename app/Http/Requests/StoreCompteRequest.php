@@ -28,7 +28,7 @@ class StoreCompteRequest extends FormRequest
             'solde' => 'required|numeric|min:10000',
             'devise' => 'required|string|size:3',
             'client' => 'required|array',
-            'client.id' => 'nullable|string|exists:clients,id',
+            'client.id' => 'nullable|string|uuid|exists:clients,id',
             'client.titulaire' => 'required_without:client.id|string|max:255',
             'client.nci' => [
                 'required_without:client.id',
