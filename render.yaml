@@ -55,12 +55,12 @@ lservices:
         value: no-reply@example.com
       - key: MAIL_FROM_NAME
         value: "API Comptes"
-      - key: TWILIO_SID
-        value: your_twilio_sid # À remplacer par votre SID Twilio
-      - key: TWILIO_TOKEN
-        value: your_twilio_token # À remplacer par votre Token Twilio
+      # - key: TWILIO_SID
+      #   value: your_twilio_sid # À remplacer par votre SID Twilio
+      # - key: TWILIO_TOKEN
+      #   value: your_twilio_token # À remplacer par votre Token Twilio
       - key: TWILIO_FROM
-        value: your_twilio_phone_number # À remplacer par votre numéro de téléphone Twilio
+        value: +17625256140
 
 databases:
   - name: pgsql
