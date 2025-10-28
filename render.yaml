@@ -39,6 +39,24 @@ lservices:
         value: true
       - key: L5_SWAGGER_CONST_HOST
         value: https://fatoumata-apisylla-1.onrender.com/
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.mailtrap.io # Exemple, à remplacer par le vrai hôte SMTP
+      - key: MAIL_PORT
+        value: 2525 # Exemple, à remplacer par le vrai port SMTP
+      - key: MAIL_USERNAME
+        value: your_mailtrap_username # Exemple, à remplacer par le vrai nom d'utilisateur SMTP
+      - key: MAIL_PASSWORD
+        value: your_mailtrap_password # Exemple, à remplacer par le vrai mot de passe SMTP
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: no-reply@example.com
+      - key: MAIL_FROM_NAME
+        value: "API Comptes"
+      - key: TWILIO_FROM
+        value: +17625256140
 
 databases:
   - name: pgsql
