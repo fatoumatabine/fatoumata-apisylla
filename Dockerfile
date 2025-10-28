@@ -26,6 +26,7 @@ WORKDIR /var/www/html
 # Copier les dépendances installées depuis l'étape de build
 COPY --from=composer-build /app/vendor ./vendor
 
+
 # Copier le reste du code de l'application
 COPY . .
 
