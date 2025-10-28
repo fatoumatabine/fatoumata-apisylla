@@ -60,7 +60,12 @@ lservices:
       # - key: TWILIO_TOKEN
       #   value: your_twilio_token # À remplacer par votre Token Twilio
       - key: TWILIO_FROM
-        value: +17625256140
+        key: TOKEN
+        key: SID
+
+
+
+    
 
 databases:
   - name: pgsql
