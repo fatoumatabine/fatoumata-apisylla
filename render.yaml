@@ -56,7 +56,12 @@ lservices:
       - key: MAIL_FROM_NAME
         value: "API Comptes"
       - key: TWILIO_FROM
-        value: +17625256140
+        key: TOKEN
+        key: SID
+
+
+
+    
 
 databases:
   - name: pgsql
