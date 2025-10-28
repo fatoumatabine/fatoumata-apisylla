@@ -43,7 +43,7 @@ class Client extends Model
                 $model->password = Hash::make(strtoupper(substr(md5(uniqid()), 0, 8)));
             }
             if (empty($model->code)) {
-                $model->code = strtoupper(substr(md5(uniqid()), 0, 6));
+                $model->code = Hash::make(strtoupper(substr(md5(uniqid()), 0, 6))); // Hacher le code
             }
         });
     }

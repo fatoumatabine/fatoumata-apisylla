@@ -223,6 +223,8 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      *     )
      * )
      */
+    Route::patch('/comptes/{id}/archive', [CompteController::class, 'archive']);
+    Route::patch('/comptes/{id}/unarchive', [CompteController::class, 'unarchive']);
     Route::get('/comptes/archived', [CompteController::class, 'archived']);
     Route::get('/comptes/{id}', [CompteController::class, 'show']);
     Route::delete('/comptes/{id}', [CompteController::class, 'destroy']);

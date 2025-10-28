@@ -46,6 +46,7 @@ class CompteResource extends JsonResource
             'client_name' => $this->whenLoaded('client', function () {
                 return $this->client->nom . ' ' . $this->client->prenom;
             }),
+            'archived' => (bool) $this->archived,
         ];
     }
 }

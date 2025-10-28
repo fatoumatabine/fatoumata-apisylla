@@ -25,7 +25,7 @@ class StoreCompteRequest extends FormRequest
     {
         $rules = [
             'type' => 'required|in:epargne,cheque',
-            'soldeInitial' => 'required|numeric|min:0',
+            'solde' => 'required|numeric|min:0',
             'devise' => 'required|string|size:3',
             'client' => 'required|array',
             'client.id' => 'nullable|integer|exists:clients,id',

@@ -35,7 +35,7 @@ class CompteCreationTest extends TestCase
 
         $compteData = [
             'type' => 'epargne',
-            'soldeInitial' => 50000, // Utiliser soldeInitial
+            'solde' => 50000, // Utiliser solde
             'devise' => 'XOF',
             'client' => $clientData,
         ];
@@ -55,7 +55,7 @@ class CompteCreationTest extends TestCase
 
         $this->assertDatabaseHas('comptes', [
             'type' => 'epargne',
-            'solde' => 50000, // Le solde est stocké comme 'solde' dans la base de données
+            'solde' => 50000,
             'devise' => 'XOF',
         ]);
 
@@ -71,7 +71,7 @@ class CompteCreationTest extends TestCase
 
         $compteData = [
             'type' => 'cheque',
-            'soldeInitial' => 100000,
+            'solde' => 100000,
             'devise' => 'EUR',
             'client' => [
                 'id' => $existingClient->id,
@@ -89,7 +89,7 @@ class CompteCreationTest extends TestCase
 
         $this->assertDatabaseHas('comptes', [
             'type' => 'cheque',
-            'solde' => 100000, // Le solde est stocké comme 'solde' dans la base de données
+            'solde' => 100000,
             'devise' => 'EUR',
             'client_id' => $existingClient->id,
         ]);
@@ -104,7 +104,7 @@ class CompteCreationTest extends TestCase
     {
         $invalidCompteData = [
             'type' => 'invalid_type', // Type invalide
-            'soldeInitial' => -100, // Solde inférieur au minimum (0)
+            'solde' => -100, // Solde inférieur au minimum (0)
             'devise' => 'EU', // Devise de taille incorrecte
             'client' => [
                 'titulaire' => '', // Titulaire manquant
@@ -120,7 +120,7 @@ class CompteCreationTest extends TestCase
         $response->assertStatus(422) // Laravel retourne 422 pour les erreurs de validation
                  ->assertJsonValidationErrors([
                      'type',
-                     'soldeInitial', // Changer solde en soldeInitial
+                     'solde',
                      'devise',
                      'client.titulaire',
                      'client.nci',
@@ -137,7 +137,7 @@ class CompteCreationTest extends TestCase
 
         $compteData = [
             'type' => 'epargne',
-            'soldeInitial' => 50000,
+            'solde' => 50000,
             'devise' => 'XOF',
             'client' => [
                 'titulaire' => $this->faker->name,
@@ -161,7 +161,7 @@ class CompteCreationTest extends TestCase
 
         $compteData = [
             'type' => 'epargne',
-            'soldeInitial' => 50000,
+            'solde' => 50000,
             'devise' => 'XOF',
             'client' => [
                 'titulaire' => $this->faker->name,
@@ -185,7 +185,7 @@ class CompteCreationTest extends TestCase
 
         $compteData = [
             'type' => 'epargne',
-            'soldeInitial' => 50000,
+            'solde' => 50000,
             'devise' => 'XOF',
             'client' => [
                 'titulaire' => $this->faker->name,
