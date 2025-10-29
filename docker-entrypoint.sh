@@ -31,8 +31,8 @@ done
 echo "Database is up - executing migrations"
 php artisan migrate --force
 
-echo "Running database seeders..."
-php artisan db:seed --force
+# echo "Running database seeders..."
+# php artisan db:seed --force
 
 echo "Setting up Passport keys..."
 # Créer les fichiers de clés Passport depuis les variables d'environnement
