@@ -6,7 +6,7 @@ lservices:
     image: fatoumatbinetousylla/appcompt:latest
     envVars:
       - key: APP_KEY
-        value: base64:Mf03t+273OigarJ+DJtcPIe0mC40OxD+YRBpVu1J0aQ=
+        value: base64:I0ZnMoBD9qFVt6rt9a4DSxbbtr1lwmnz6BBW+qn7Cq8=
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
