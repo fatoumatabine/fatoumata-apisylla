@@ -6,7 +6,7 @@ services:
     image: fatoumatbinetousylla/appcompt:latest
     envVars:
       - key: APP_KEY
-      value: base64:YhMusS7Oj7gvSprEjE/0btGRNwHyHlm2ULZ0o0Kb2as=
+        value: base64:zdGGyAF9ualOupCCpG9qvTt+duJaJjj8DC7T5pZP6ew=
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
