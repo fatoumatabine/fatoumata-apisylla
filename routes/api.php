@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CompteController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\ClientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -230,6 +231,7 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
     Route::patch('/comptes/{id}/unarchive', [CompteController::class, 'unarchive']);
     Route::get('/comptes/archived', [CompteController::class, 'archived']);
     Route::get('/comptes/{id}', [CompteController::class, 'show']);
+    Route::get('/comptes/numero/{numero}', [CompteController::class, 'showByNumero']);
     Route::delete('/comptes/{id}', [CompteController::class, 'destroy']);
     Route::patch('/comptes/{id}/block', [CompteController::class, 'block']);
     Route::patch('/comptes/{id}/unblock', [CompteController::class, 'unblock']);
@@ -362,7 +364,9 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      */
      Route::get('/comptes/{compteId}/transactions', [TransactionController::class, 'index']);
 
-    /**
+     Route::get('/clients/telephone/{telephone}', [ClientController::class, 'showByTelephone']);
+
+     /**
      * @OA\Post(
      *     path="/api/v1/comptes/{compteId}/transactions",
      *     summary="Créer une nouvelle transaction",

@@ -414,8 +414,66 @@ class CompteController extends Controller
      */
     public function show(string $id)
     {
+    try {
+    $compte = Compte::with('client')->find($id);
+
+    if (!$compte) {
+    return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+    }
+
+    return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
+    } catch (\Exception $e) {
+    Log::error('Erreur lors de la récupération du compte: ' . $e->getMessage());
+    return $this->error('Erreur interne du serveur lors de la récupération du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+    }
+    }
+
+    /**
+     * @OA\Get(
+     *      path="/api/v1/comptes/numero/{numero}",
+     *      operationId="getCompteByNumero",
+     *      tags={"Comptes"},
+     *      summary="Obtenir un compte par numéro",
+     *      description="Retourne un compte bancaire par son numéro.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="numero",
+     *          in="path",
+     *          required=true,
+     *          description="Numéro du compte à récupérer",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Opération réussie",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Compte récupéré avec succès"),
+     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function showByNumero(string $numero)
+    {
         try {
-            $compte = Compte::with('client')->find($id);
+            $compte = Compte::with('client')->numero($numero)->first();
 
             if (!$compte) {
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
@@ -423,7 +481,7 @@ class CompteController extends Controller
 
             return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la récupération du compte: ' . $e->getMessage());
+            Log::error('Erreur lors de la récupération du compte par numéro: ' . $e->getMessage());
             return $this->error('Erreur interne du serveur lors de la récupération du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
         }
     }
