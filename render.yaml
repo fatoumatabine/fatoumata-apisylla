@@ -1,4 +1,4 @@
-lservices:
+services:
   - type: web
     name: laravel-docker
     env: docker
@@ -6,11 +6,7 @@ lservices:
     image: fatoumatbinetousylla/appcompt:latest
     envVars:
       - key: APP_KEY
-        value: base64:YhMusS7Oj7gvSprEjE/0btGRNwHyHlm2ULZ0o0Kb2as=
-      - key: PASSPORT_PRIVATE_KEY
-        fromSecret: PASSPORT_PRIVATE_KEY
-      - key: PASSPORT_PUBLIC_KEY
-        fromSecret: PASSPORT_PUBLIC_KEY
+      value: base64:YhMusS7Oj7gvSprEjE/0btGRNwHyHlm2ULZ0o0Kb2as=
       - key: APP_ENV
         value: production
       - key: APP_DEBUG

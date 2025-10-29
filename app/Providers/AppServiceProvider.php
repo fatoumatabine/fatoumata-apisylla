@@ -12,7 +12,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+    // Enregistrer les interfaces et leurs implémentations
+        $this->app->bind(\App\Contracts\TransactionArchiveInterface::class, \App\Services\PostgresTransactionArchive::class);
+        $this->app->bind(\App\Contracts\SmsServiceInterface::class, \App\Services\TwilioSmsService::class);
     }
 
     /**

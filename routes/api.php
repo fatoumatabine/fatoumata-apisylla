@@ -22,7 +22,7 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      *     path="/api/v1/comptes",
      *     summary="Lister tous les comptes non archivés",
      *     tags={"Comptes"},
-     *     security={{"bearerAuth": {}}},
+     // *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
@@ -161,7 +161,7 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
     *     path="/api/v1/comptes/archived",
     *     summary="Lister tous les comptes archivés",
     *     tags={"Comptes"},
-    *     security={{"bearerAuth": {}}},
+    // *     security={{"bearerAuth": {}}},
     *     @OA\Parameter(
     *         name="page",
     *         in="query",
@@ -240,7 +240,7 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      *      tags={"Comptes"},
      *      summary="Modifier les informations d'un compte",
      *      description="Met à jour les informations d'un compte et de son client associé. Tous les champs sont optionnels, mais au moins un champ de modification doit être fourni.",
-     *      security={{"bearerAuth": {}}},
+     // *      security={{"bearerAuth": {}}},
      *      @OA\Parameter(
      *          name="compteId",
      *          in="path",

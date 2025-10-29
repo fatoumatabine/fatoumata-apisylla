@@ -1019,6 +1019,20 @@
                         "readOnly": "true",
                         "example": []
                     },
+                    "date_debut_blocage": {
+                        "description": "Date de début du blocage du compte",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-01T10:00:00Z",
+                        "nullable": "true"
+                    },
+                    "date_fin_blocage": {
+                        "description": "Date de fin du blocage du compte",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-12-01T10:00:00Z",
+                        "nullable": "true"
+                    },
                     "client_id": {
                         "type": "integer",
                         "readOnly": "true",
