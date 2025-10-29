@@ -1,67 +1,221 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏦 API Comptes Bancaires
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Une API REST complète pour la gestion de comptes bancaires avec Laravel 11, PostgreSQL et architecture SOLID.
 
-## About Laravel
+## 🚀 Fonctionnalités
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### ✅ Comptes Bancaires
+- Création de comptes (Épargne/Chèque)
+- Gestion des clients
+- Blocage/Déblocage automatique des comptes épargne
+- Archivage automatique des comptes expirés
+- Calcul automatique du solde (dépôts - retraits)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### ✅ Transactions
+- Dépôts et retraits avec validation métier
+- Historique des transactions
+- Archivage automatique vers base externe (Neon PostgreSQL)
+- Notifications SMS automatiques
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### ✅ Architecture Propre
+- **SOLID Principles** respectés
+- **Observer Pattern** pour les règles métier
+- **Service Layer** pour la logique métier
+- **Interfaces** pour éviter le couplage fort
+- **Tests automatisés** complets
 
-## Learning Laravel
+## 📋 Prérequis
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- PHP 8.3+
+- Composer
+- PostgreSQL 13+
+- Node.js & NPM (pour les assets)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🛠️ Installation
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Cloner le projet
+```bash
+git clone <repository-url>
+cd appcompt
+```
 
-## Laravel Sponsors
+### 2. Installation des dépendances
+```bash
+composer install
+npm install && npm run build
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 3. Configuration de l'environnement
 
-### Premium Partners
+#### Option A : Configuration PostgreSQL locale (recommandé)
+```bash
+# Exécuter le script d'installation automatique
+./setup-local.sh
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+#### Option B : Configuration manuelle
+```bash
+# Copier le fichier d'exemple
+cp .env.example .env
 
-## Contributing
+# Modifier .env selon votre configuration PostgreSQL
+# Puis exécuter :
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+php artisan l5-swagger:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Démarrer l'application
+```bash
+php artisan serve
+```
 
-## Code of Conduct
+L'API sera disponible sur : `http://localhost:8000`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 📚 Documentation API
 
-## Security Vulnerabilities
+La documentation complète est générée automatiquement avec Swagger :
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- **Interface Swagger** : `http://localhost:8000/api/documentation`
+- **JSON OpenAPI** : `http://localhost:8000/api/docs`
 
-## License
+## 🧪 Tests
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# fatoumata-apisylla
+```bash
+# Exécuter tous les tests
+php artisan test
+
+# Tests avec couverture
+php artisan test --coverage
+```
+
+## 🚀 Déploiement
+
+### Render.com (recommandé)
+
+1. **Build & Push** votre image Docker :
+```bash
+docker build -t votre-app .
+docker tag votre-app votre-registry/votre-app:latest
+docker push votre-registry/votre-app:latest
+```
+
+2. **Configuration Render.com** :
+   - Service : Web Service
+   - Environment : Docker
+   - Database : PostgreSQL (inclus)
+
+3. **Variables d'environnement** (dans render.yaml) :
+   ```yaml
+   envVars:
+     - key: APP_KEY
+       value: "base64:votre-cle-generée"
+     - key: APP_ENV
+       value: production
+     - key: DB_CONNECTION
+       value: pgsql
+     # ... autres variables depuis la DB Render
+   ```
+
+## 🔧 Architecture
+
+### 📁 Structure des dossiers
+```
+app/
+├── Contracts/          # Interfaces (SmsServiceInterface, TransactionArchiveInterface)
+├── Events/            # Événements (TransactionCreated, ClientCreated)
+├── Jobs/              # Tâches en file (ArchiveDailyTransactions)
+├── Listeners/         # Écouteurs d'événements (SendTransactionNotification)
+├── Models/            # Modèles Eloquent (Compte, Transaction, Client)
+├── Observers/         # Observers (TransactionObserver)
+├── Services/          # Services métier (SmsService, TransactionService)
+├── Http/Controllers/  # Contrôleurs API
+└── Console/Commands/  # Commandes Artisan
+
+tests/                 # Tests automatisés
+├── Feature/          # Tests d'intégration API
+└── Unit/             # Tests unitaires
+```
+
+### 🎯 Principes SOLID Implémentés
+
+1. **Single Responsibility** : Chaque classe a une responsabilité unique
+2. **Open/Closed** : Interfaces permettent l'extension sans modification
+3. **Liskov Substitution** : Implémentations interchangeables
+4. **Interface Segregation** : Interfaces spécifiques et ciblées
+5. **Dependency Inversion** : Injection via interfaces
+
+### 🔄 Flux de données
+
+```
+Transaction créée → Observer → Validation → Événement → Listener → SMS
+                                ↓
+                            Job d'archivage → Base externe
+```
+
+## 📊 Endpoints API
+
+### Comptes
+- `GET /api/v1/comptes` - Lister tous les comptes
+- `POST /api/v1/comptes` - Créer un compte
+- `GET /api/v1/comptes/{id}` - Détails d'un compte
+- `PATCH /api/v1/comptes/{id}/block` - Bloquer un compte
+- `PATCH /api/v1/comptes/{id}/unblock` - Débloquer un compte
+- `DELETE /api/v1/comptes/{id}` - Supprimer un compte
+
+### Transactions
+- `GET /api/v1/comptes/{id}/transactions` - Historique des transactions
+- `POST /api/v1/comptes/{id}/transactions` - Nouvelle transaction
+- `GET /api/v1/comptes/{id}/transactions/{transactionId}` - Détails transaction
+
+## 🔐 Sécurité
+
+- **Validation stricte** des données d'entrée
+- **Vérifications métier** avant chaque transaction
+- **Archivage sécurisé** des données sensibles
+- **Logs détaillés** pour l'audit
+
+## 📈 Performance
+
+- **Pagination automatique** sur toutes les listes
+- **Index de base de données** optimisés
+- **Cache intelligent** des requêtes fréquentes
+- **Archivage automatique** pour réduire la charge
+
+## 🧪 Tests Automatisés
+
+```bash
+# Tests de fonctionnalités
+php artisan test tests/Feature/
+
+# Tests unitaires
+php artisan test tests/Unit/
+
+# Tests avec rapport HTML
+php artisan test --coverage-html=reports/coverage
+```
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Commit les changements (`git commit -am 'Ajout nouvelle fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Créer une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+## 👥 Auteurs
+
+- **Fatoumata Sylla** - *Développement initial*
+
+## 🙏 Remerciements
+
+- Laravel Framework
+- PostgreSQL
+- Swagger/OpenAPI
+- Render.com
+- Toute la communauté PHP/Laravel
