@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compte;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Ré-importation de Request
+use App\Http\Requests\ListComptesRequest; // Importation de la nouvelle requête
 use App\Http\Requests\StoreCompteRequest;
 use App\Http\Resources\CompteResource;
 use App\Http\Traits\ApiResponseTrait;
@@ -104,29 +105,35 @@ class CompteController extends Controller
      *      )
      * )
      */
-    public function index(Request $request)
+    public function index(ListComptesRequest $request)
     {
+        $validated = $request->validated();
+
         $query = Compte::query();
 
         // Filtrer par type
-        if ($request->has('type')) {
-            $query->where('type', $request->input('type'));
+        if (isset($validated['type'])) {
+            $query->where('type', $validated['type']);
         }
 
         // Filtrer par statut
-        if ($request->has('statut')) {
-            $query->where('statut', $request->input('statut'));
+        if (isset($validated['statut'])) {
+            $query->where('statut', $validated['statut']);
         }
 
-        // Filtrer par numéro de compte
-        if ($request->has('numeroCompte')) {
+        // Exclure les comptes bloqués et fermés
+        $query->where('statut', '!=', 'bloque')
+              ->where('statut', '!=', 'ferme');
+
+        // Filtrer par numéro de compte (si nécessaire, ajouter la validation dans ListComptesRequest)
+        if ($request->has('numeroCompte')) { // Garder pour l'instant si non validé dans la requête
             $numeroCompte = $request->input('numeroCompte');
             $query->where('numeroCompte', $numeroCompte);
         }
 
         // Recherche par titulaire ou numéro
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
+        if (isset($validated['search'])) {
+            $searchTerm = $validated['search'];
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('titulaire', 'like', '%' . $searchTerm . '%')
                   ->orWhere('numeroCompte', 'like', '%' . $searchTerm . '%');
@@ -134,12 +141,12 @@ class CompteController extends Controller
         }
 
         // Tri
-        $sortField = $request->input('sort', 'dateCreation');
-        $sortOrder = $request->input('order', 'desc');
+        $sortField = $validated['sort'] ?? 'dateCreation';
+        $sortOrder = $validated['order'] ?? 'desc';
         $query->orderBy($sortField, $sortOrder);
 
         // Pagination
-        $limit = $request->input('limit', 10);
+        $limit = $validated['limit'] ?? 10;
         $limit = min($limit, 100); // Max 100 items per page
         $comptes = $query->with('client')->paginate($limit);
 
@@ -585,8 +592,8 @@ class CompteController extends Controller
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
             }
 
-            if ($compte->type !== 'epargne') {
-                return $this->error('Seuls les comptes épargne peuvent être bloqués.', 422, 'INVALID_ACCOUNT_TYPE');
+            if ($compte->type !== 'epargne' || $compte->statut !== 'actif') {
+                return $this->error('Seuls les comptes épargne actifs peuvent être bloqués.', 422, 'INVALID_ACCOUNT_TYPE_OR_STATUS');
             }
 
             $request->validate([
@@ -731,6 +738,11 @@ class CompteController extends Controller
 
             if (!$compte) {
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            // Nouvelle validation pour l'archivage
+            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || ($compte->date_fin_blocage && $compte->date_fin_blocage->isFuture())) {
+                return $this->error('Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être archivés.', 422, 'INVALID_ARCHIVE_CRITERIA');
             }
 
             $compte->archived = true;

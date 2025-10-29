@@ -43,6 +43,8 @@ class AccountManagementTest extends TestCase
                              'solde',
                              'devise',
                              'statut',
+                             'date_debut_blocage',
+                             'date_fin_blocage',
                              'client_id',
                              'client_name',
                          ],
@@ -76,7 +78,7 @@ class AccountManagementTest extends TestCase
     public function it_can_search_accounts_by_holder_name()
     {
         $client = Client::factory()->create(['titulaire' => 'Jean Dupont']);
-        Compte::factory()->create(['client_id' => $client->id, 'titulaire' => 'Jean Dupont']);
+        Compte::factory()->create(['client_id' => $client->id, 'titulaire' => 'Jean Dupont', 'statut' => 'actif']);
 
         $response = $this->getJson('/api/v1/comptes?search=Jean');
 
@@ -107,10 +109,18 @@ class AccountManagementTest extends TestCase
                      'data' => [
                          'id' => $compte->id,
                          'numeroCompte' => $compte->numeroCompte,
+                         'titulaire' => $compte->titulaire,
                          'type' => $compte->type,
                          'solde' => $compte->solde,
                          'devise' => $compte->devise,
+                         'dateCreation' => $compte->dateCreation->toIso8601String(),
                          'statut' => $compte->statut,
+                         'metadata' => $compte->metadata,
+                         'date_debut_blocage' => $compte->date_debut_blocage ? $compte->date_debut_blocage->toIso8601String() : null,
+                         'date_fin_blocage' => $compte->date_fin_blocage ? $compte->date_fin_blocage->toIso8601String() : null,
+                         'client_id' => $compte->client_id,
+                         'client_name' => $compte->client->titulaire,
+                         'archived' => (bool) $compte->archived,
                      ],
                  ])
                  ->assertJsonStructure([
@@ -119,12 +129,18 @@ class AccountManagementTest extends TestCase
                      'data' => [
                          'id',
                          'numeroCompte',
+                         'titulaire',
                          'type',
                          'solde',
                          'devise',
+                         'dateCreation',
                          'statut',
+                         'metadata',
+                         'date_debut_blocage',
+                         'date_fin_blocage',
                          'client_id',
                          'client_name',
+                         'archived',
                      ],
                  ]);
     }
@@ -219,7 +235,28 @@ class AccountManagementTest extends TestCase
         $response->assertStatus(422)
                  ->assertJson([
                      'success' => false,
-                     'message' => 'Seuls les comptes épargne peuvent être bloqués.',
+                     'message' => 'Seuls les comptes épargne actifs peuvent être bloqués.',
+                 ]);
+    }
+
+    /** @test */
+    public function it_returns_error_when_blocking_non_active_savings_account()
+    {
+        $compte = Compte::factory()->create([
+            'type' => 'epargne',
+            'statut' => 'bloque', // Compte épargne mais non actif
+        ]);
+
+        $blockData = [
+            'date_fin_blocage' => Carbon::now()->addDays(30)->toISOString(),
+        ];
+
+        $response = $this->patchJson('/api/v1/comptes/' . $compte->id . '/block', $blockData);
+
+        $response->assertStatus(422)
+                 ->assertJson([
+                     'success' => false,
+                     'message' => 'Seuls les comptes épargne actifs peuvent être bloqués.',
                  ]);
     }
 
@@ -294,5 +331,86 @@ class AccountManagementTest extends TestCase
         foreach ($data as $compte) {
             $this->assertTrue($compte['archived']);
         }
+    }
+
+    /** @test */
+    public function it_can_archive_a_blocked_expired_savings_account()
+    {
+        $compte = Compte::factory()->create([
+            'type' => 'epargne',
+            'statut' => 'bloque',
+            'date_debut_blocage' => Carbon::now()->subDays(30),
+            'date_fin_blocage' => Carbon::now()->subDays(1), // Date de fin de blocage échue
+            'archived' => false,
+        ]);
+
+        $response = $this->patchJson('/api/v1/comptes/' . $compte->id . '/archive');
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'message' => 'Compte archivé avec succès.',
+                 ]);
+
+        $this->assertDatabaseHas('comptes', [
+            'id' => $compte->id,
+            'archived' => true,
+        ]);
+    }
+
+    /** @test */
+    public function it_returns_error_when_archiving_non_savings_account()
+    {
+        $compte = Compte::factory()->create([
+            'type' => 'cheque',
+            'statut' => 'actif',
+            'archived' => false,
+        ]);
+
+        $response = $this->patchJson('/api/v1/comptes/' . $compte->id . '/archive');
+
+        $response->assertStatus(422)
+                 ->assertJson([
+                     'success' => false,
+                     'message' => 'Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être archivés.',
+                 ]);
+    }
+
+    /** @test */
+    public function it_returns_error_when_archiving_non_blocked_savings_account()
+    {
+        $compte = Compte::factory()->create([
+            'type' => 'epargne',
+            'statut' => 'actif', // Non bloqué
+            'archived' => false,
+        ]);
+
+        $response = $this->patchJson('/api/v1/comptes/' . $compte->id . '/archive');
+
+        $response->assertStatus(422)
+                 ->assertJson([
+                     'success' => false,
+                     'message' => 'Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être archivés.',
+                 ]);
+    }
+
+    /** @test */
+    public function it_returns_error_when_archiving_blocked_non_expired_savings_account()
+    {
+        $compte = Compte::factory()->create([
+            'type' => 'epargne',
+            'statut' => 'bloque',
+            'date_debut_blocage' => Carbon::now()->subDays(5),
+            'date_fin_blocage' => Carbon::now()->addDays(25), // Date de fin de blocage non échue
+            'archived' => false,
+        ]);
+
+        $response = $this->patchJson('/api/v1/comptes/' . $compte->id . '/archive');
+
+        $response->assertStatus(422)
+                 ->assertJson([
+                     'success' => false,
+                     'message' => 'Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être archivés.',
+                 ]);
     }
 }
