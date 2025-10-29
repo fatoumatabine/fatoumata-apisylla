@@ -26,7 +26,7 @@ class ListComptesRequest extends FormRequest
             'type' => ['nullable', 'string', Rule::in(['epargne', 'cheque', 'courant'])], // Ajout de 'courant' comme type valide
             'statut' => ['nullable', 'string', Rule::in(['actif', 'bloque', 'ferme'])],
             'search' => ['nullable', 'string', 'max:255'],
-            'sort' => ['nullable', 'string', Rule::in(['dateCreation', 'solde', 'titulaire', 'numeroCompte'])],
+            'sort' => ['nullable', 'string', Rule::in(['date_creation', 'solde', 'titulaire', 'numero_compte'])],
             'order' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
@@ -42,7 +42,7 @@ class ListComptesRequest extends FormRequest
         return [
             'type.in' => 'Le type de compte doit être "epargne", "cheque" ou "courant".',
             'statut.in' => 'Le statut du compte doit être "actif", "bloque" ou "ferme".',
-            'sort.in' => 'Le champ de tri n\'est pas valide.',
+            'sort.in' => 'Le champ de tri n\'est pas valide. Options: date_creation, solde, titulaire, numero_compte.',
             'order.in' => 'L\'ordre de tri doit être "asc" ou "desc".',
             'limit.min' => 'La limite doit être au moins de 1.',
             'limit.max' => 'La limite ne peut pas dépasser 100.',

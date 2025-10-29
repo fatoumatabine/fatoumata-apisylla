@@ -14,18 +14,18 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('compte_id');
-            $table->enum('type', ['depot', 'retrait', 'virement']);
+            $table->enum('type', ['credit', 'debit', 'virement']);
             $table->decimal('montant', 15, 2);
             $table->string('devise');
             $table->string('description')->nullable();
-            $table->timestamp('dateTransaction')->useCurrent();
+            $table->timestamp('date_transaction')->useCurrent();
             $table->timestamps();
 
             $table->foreign('compte_id')->references('id')->on('comptes')->onDelete('cascade');
 
             $table->index('compte_id');
             $table->index('type');
-            $table->index('dateTransaction');
+            $table->index('date_transaction');
         });
     }
 

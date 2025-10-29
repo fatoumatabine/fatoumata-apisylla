@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('comptes', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('numeroCompte')->unique();
+            $table->string('numero_compte')->unique();
             $table->string('titulaire');
-            $table->enum('type', ['epargne', 'cheque']);
+            $table->enum('type', ['epargne', 'cheque', 'courant']);
             $table->decimal('solde', 15, 2)->default(0);
             $table->string('devise');
-            $table->timestamp('dateCreation')->useCurrent();
+            $table->timestamp('date_creation')->useCurrent();
             $table->enum('statut', ['actif', 'bloque', 'ferme'])->default('actif');
             $table->json('metadata')->nullable();
             $table->uuid('client_id')->nullable(); // Assuming a Client model with UUID primary key
@@ -26,7 +26,7 @@ return new class extends Migration
 
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('set null');
 
-            $table->index('numeroCompte');
+            $table->index('numero_compte');
             $table->index('client_id');
             $table->softDeletes(); // Add soft deletes
         });

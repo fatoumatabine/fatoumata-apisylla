@@ -69,8 +69,8 @@ class CompteController extends Controller
      *      @OA\Parameter(
      *          name="sort",
      *          in="query",
-     *          description="Champ de tri (e.g., 'dateCreation', 'solde')",
-     *          @OA\Schema(type="string", default="dateCreation")
+     *          description="Champ de tri (e.g., 'date_creation', 'solde')",
+     *          @OA\Schema(type="string", default="date_creation")
      *      ),
      *      @OA\Parameter(
      *          name="order",
@@ -135,13 +135,22 @@ class CompteController extends Controller
         if (isset($validated['search'])) {
             $searchTerm = $validated['search'];
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('titulaire', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('numeroCompte', 'like', '%' . $searchTerm . '%');
+            $q->where('titulaire', 'like', '%' . $searchTerm . '%')
+            ->orWhere('numero_compte', 'like', '%' . $searchTerm . '%');
             });
         }
 
-        // Tri
-        $sortField = $validated['sort'] ?? 'dateCreation';
+        // Mapping des champs de tri
+        $sortMapping = [
+            'dateCreation' => 'date_creation',
+            'numeroCompte' => 'numero_compte',
+            // add others if needed
+        ];
+
+        $sortField = $validated['sort'] ?? 'date_creation';
+        if (isset($sortMapping[$sortField])) {
+            $sortField = $sortMapping[$sortField];
+        }
         $sortOrder = $validated['order'] ?? 'desc';
         $query->orderBy($sortField, $sortOrder);
 
@@ -246,18 +255,18 @@ class CompteController extends Controller
 
             // Générer numéro de compte unique
             do {
-                $numeroCompte = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
-            } while (Compte::where('numeroCompte', $numeroCompte)->exists());
+                $numero_compte = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+            } while (Compte::where('numero_compte', $numero_compte)->exists());
 
             // Créer le compte
             $compte = Compte::create([
-                'numeroCompte' => $numeroCompte,
+                'numero_compte' => $numero_compte,
                 'titulaire' => $client->titulaire,
                 'type' => $data['type'],
                 'solde' => $data['solde'], // Correction: utiliser 'solde' au lieu de 'soldeInitial'
                 'devise' => $data['devise'],
                 'statut' => 'actif',
-                'dateCreation' => now(),
+                'date_creation' => now(),
                 'client_id' => $client->id,
             ]);
 
@@ -291,8 +300,8 @@ class CompteController extends Controller
      *      @OA\Parameter(
      *          name="sort",
      *          in="query",
-     *          description="Champ de tri (e.g., 'dateCreation', 'solde')",
-     *          @OA\Schema(type="string", default="dateCreation")
+     *          description="Champ de tri (e.g., 'date_creation', 'solde')",
+     *          @OA\Schema(type="string", default="date_creation")
      *      ),
      *      @OA\Parameter(
      *          name="order",
@@ -335,15 +344,23 @@ class CompteController extends Controller
          if ($request->has('search')) {
              $searchTerm = $request->input('search');
              $query->where(function ($q) use ($searchTerm) {
-                 $q->where('titulaire', 'like', '%' . $searchTerm . '%')
-                   ->orWhere('numeroCompte', 'like', '%' . $searchTerm . '%');
+             $q->where('titulaire', 'like', '%' . $searchTerm . '%')
+             ->orWhere('numero_compte', 'like', '%' . $searchTerm . '%');
              });
          }
 
-         // Tri
-         $sortField = $request->input('sort', 'dateCreation');
-         $sortOrder = $request->input('order', 'desc');
-         $query->orderBy($sortField, $sortOrder);
+         // Mapping des champs de tri
+         $sortMapping = [
+             'dateCreation' => 'date_creation',
+             'numeroCompte' => 'numero_compte',
+          ];
+
+          $sortField = $request->input('sort', 'date_creation');
+          if (isset($sortMapping[$sortField])) {
+              $sortField = $sortMapping[$sortField];
+          }
+          $sortOrder = $request->input('order', 'desc');
+          $query->orderBy($sortField, $sortOrder);
 
          // Pagination
          $limit = $request->input('limit', 10);

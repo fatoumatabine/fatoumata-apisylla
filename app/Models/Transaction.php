@@ -27,7 +27,7 @@ class Transaction extends Model
         'montant',
         'devise',
         'description',
-        'dateTransaction',
+        'date_transaction',
         'status',
         'archived',
         'reference',
@@ -35,7 +35,7 @@ class Transaction extends Model
     ];
 
     protected $casts = [
-        'dateTransaction' => 'datetime',
+        'date_transaction' => 'datetime',
         'archived' => 'boolean',
         'metadata' => 'array',
     ];
@@ -48,8 +48,8 @@ class Transaction extends Model
             if (empty($transaction->reference)) {
                 $transaction->reference = 'TXN-' . strtoupper(uniqid());
             }
-            if (empty($transaction->dateTransaction)) {
-                $transaction->dateTransaction = now();
+            if (empty($transaction->date_transaction)) {
+                $transaction->date_transaction = now();
             }
             if (empty($transaction->status)) {
                 $transaction->status = self::STATUS_COMPLETED;
@@ -77,7 +77,7 @@ class Transaction extends Model
     // Vérifier si la transaction est de aujourd'hui
     public function isToday(): bool
     {
-        return $this->dateTransaction->isToday();
+        return $this->date_transaction->isToday();
     }
 
     // Vérifier si la transaction peut être effectuée
@@ -106,7 +106,7 @@ class Transaction extends Model
     // Scope pour les transactions d'aujourd'hui
     public function scopeToday($query)
     {
-        return $query->whereDate('dateTransaction', Carbon::today());
+        return $query->whereDate('date_transaction', Carbon::today());
     }
 
     // Scope pour les transactions par type

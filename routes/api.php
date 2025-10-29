@@ -62,8 +62,8 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      *     @OA\Parameter(
      *         name="sort",
      *         in="query",
-     *         description="Tri (dateCreation, solde, titulaire)",
-     *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"}, default="dateCreation")
+     *         description="Tri (date_creation, solde, titulaire)",
+     *         @OA\Schema(type="string", enum={"date_creation", "solde", "titulaire"}, default="date_creation")
      *     ),
      *     @OA\Parameter(
      *         name="order",
@@ -183,8 +183,8 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
       *     @OA\Parameter(
       *         name="sort",
       *         in="query",
-      *         description="Tri (dateCreation, solde, titulaire)",
-      *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"}, default="dateCreation")
+      *         description="Tri (date_creation, solde, titulaire)",
+      *         @OA\Schema(type="string", enum={"date_creation", "solde", "titulaire"}, default="date_creation")
       *     ),
       *     @OA\Parameter(
       *         name="order",

@@ -16,12 +16,12 @@ class Compte extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'numeroCompte',
+        'numero_compte',
         'titulaire',
         'type',
         'solde',
         'devise',
-        'dateCreation',
+        'date_creation',
         'statut',
         'metadata',
         'client_id',
@@ -32,7 +32,7 @@ class Compte extends Model
 
     protected $casts = [
         'metadata' => 'array',
-        'dateCreation' => 'datetime',
+        'date_creation' => 'datetime',
         'date_debut_blocage' => 'datetime',
         'date_fin_blocage' => 'datetime',
         'archived' => 'boolean',
@@ -43,8 +43,8 @@ class Compte extends Model
         parent::boot();
         static::addGlobalScope(new NonArchivedScope);
         static::creating(function ($model) {
-            if (empty($model->numeroCompte)) {
-                $model->numeroCompte = (string) Str::uuid();
+            if (empty($model->numero_compte)) {
+                $model->numero_compte = (string) Str::uuid();
             }
         });
     }
@@ -59,9 +59,9 @@ class Compte extends Model
         return $this->hasMany(Transaction::class);
     }
 
-    public function scopeNumero($query, $numeroCompte)
+    public function scopeNumero($query, $numero_compte)
     {
-        return $query->where('numeroCompte', $numeroCompte);
+        return $query->where('numero_compte', $numero_compte);
     }
 
     public function scopeClient($query, $telephone)
