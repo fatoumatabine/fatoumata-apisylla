@@ -19,8 +19,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(property="date_creation", type="string", format="date-time", readOnly="true", example="2025-10-26T12:00:00Z"),
  *     @OA\Property(property="statut", type="string", readOnly="true", example="actif"),
  *     @OA\Property(property="metadata", type="object", readOnly="true", example={}),
- *     @OA\Property(property="date_debut_blocage", type="string", format="date-time", nullable="true", example="2025-11-01T10:00:00Z", description="Date de début du blocage du compte"),
- *     @OA\Property(property="date_fin_blocage", type="string", format="date-time", nullable="true", example="2025-12-01T10:00:00Z", description="Date de fin du blocage du compte"),
+ *     @OA\Property(property="date_debut_blocage", type="string", format="date-time", nullable="true", example="2025-11-01T10:00:00Z", description="Date de début du blocage du compte (uniquement pour les comptes épargne)"),
+ *     @OA\Property(property="date_fin_blocage", type="string", format="date-time", nullable="true", example="2025-12-01T10:00:00Z", description="Date de fin du blocage du compte (uniquement pour les comptes épargne)"),
  *     @OA\Property(property="client_id", type="integer", readOnly="true", example=1),
  *     @OA\Property(property="client_name", type="string", readOnly="true", example="Nom Prénom Client")
  * )
@@ -44,8 +44,8 @@ class CompteResource extends JsonResource
             'date_creation' => $this->date_creation->toIso8601String(),
             'statut' => $this->statut,
             'metadata' => $this->metadata,
-            'date_debut_blocage' => $this->date_debut_blocage ? $this->date_debut_blocage->toIso8601String() : null,
-            'date_fin_blocage' => $this->date_fin_blocage ? $this->date_fin_blocage->toIso8601String() : null,
+            'date_debut_blocage' => $this->when($this->type === 'epargne', $this->date_debut_blocage ? $this->date_debut_blocage->toIso8601String() : null),
+            'date_fin_blocage' => $this->when($this->type === 'epargne', $this->date_fin_blocage ? $this->date_fin_blocage->toIso8601String() : null),
             'client_id' => $this->client_id,
             'client_name' => $this->whenLoaded('client', function () {
                 return $this->client->titulaire; // Utiliser 'titulaire' au lieu de 'nom' et 'prenom'

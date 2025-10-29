@@ -533,6 +533,10 @@ class CompteController extends Controller
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
             }
 
+            if ($compte->statut !== 'actif') {
+                return $this->error('Seuls les comptes actifs peuvent être supprimés.', 422, 'INVALID_DELETE_STATUS');
+            }
+
             $compte->forceDelete(); // Supprime définitivement le compte
 
             return $this->success(null, 'Compte supprimé avec succès.');
@@ -758,8 +762,8 @@ class CompteController extends Controller
             }
 
             // Nouvelle validation pour l'archivage
-            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || ($compte->date_fin_blocage && $compte->date_fin_blocage->isFuture())) {
-                return $this->error('Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être archivés.', 422, 'INVALID_ARCHIVE_CRITERIA');
+            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || !$compte->date_debut_blocage || $compte->date_debut_blocage->isFuture()) {
+            return $this->error('Seuls les comptes épargne bloqués dont la date de début de blocage est échue peuvent être archivés.', 422, 'INVALID_ARCHIVE_CRITERIA');
             }
 
             $compte->archived = true;
@@ -823,7 +827,12 @@ class CompteController extends Controller
             $compte = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)->find($id);
 
             if (!$compte) {
-                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            // Validation pour le désarchivage
+            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || !$compte->date_fin_blocage || $compte->date_fin_blocage->isFuture()) {
+                return $this->error('Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être désarchivés.', 422, 'INVALID_UNARCHIVE_CRITERIA');
             }
 
             $compte->archived = false;
