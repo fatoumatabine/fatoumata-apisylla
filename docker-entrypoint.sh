@@ -34,6 +34,18 @@ php artisan migrate --force
 echo "Running database seeders..."
 php artisan db:seed --force
 
+echo "Setting up Passport keys..."
+# Créer les fichiers de clés Passport depuis les variables d'environnement
+if [ -n "$PASSPORT_PRIVATE_KEY" ]; then
+  echo "$PASSPORT_PRIVATE_KEY" > storage/oauth-private.key
+  echo "PASSPORT_PRIVATE_KEY set"
+fi
+
+if [ -n "$PASSPORT_PUBLIC_KEY" ]; then
+  echo "$PASSPORT_PUBLIC_KEY" > storage/oauth-public.key
+  echo "PASSPORT_PUBLIC_KEY set"
+fi
+
 echo "Generating Swagger documentation..."
 php artisan l5-swagger:generate
 ls -l storage/api-docs/
