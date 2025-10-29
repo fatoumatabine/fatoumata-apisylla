@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('comptes', function (Blueprint $table) {
-            $table->renameColumn('numeroCompte', 'numero_compte');
-            $table->renameColumn('dateCreation', 'date_creation');
+            $table->renameColumn('numerocompte', 'numero_compte');
+            $table->renameColumn('datecreation', 'date_creation');
         });
     }
 
@@ -23,8 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('comptes', function (Blueprint $table) {
-            $table->renameColumn('numero_compte', 'numeroCompte');
-            $table->renameColumn('date_creation', 'dateCreation');
+            $table->renameColumn('numero_compte', 'numerocompte');
+            $table->renameColumn('date_creation', 'datecreation');
         });
     }
 };
