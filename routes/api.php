@@ -6,6 +6,7 @@ use App\Http\Controllers\CompteController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +19,13 @@ use App\Http\Controllers\DashboardController;
 |
 */
 
-Route::prefix('v1')->middleware('auth:api')->group(function () {
+Route::prefix('v1')->group(function () {
+
+    // Login endpoint (non protégé)
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Routes protégées
+    Route::middleware('auth:api')->group(function () {
     /**
      * @OA\Get(
      *     path="/api/v1/comptes",
@@ -371,6 +378,8 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
       Route::get('/clients/telephone/{telephone}', [ClientController::class, 'showByTelephone']);
 
       Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    }); // Fin du groupe protégé
 
      /**
      * @OA\Post(
