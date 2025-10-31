@@ -48,6 +48,7 @@ fi
 
 echo "Generating Swagger documentation..."
 php artisan l5-swagger:generate
+php artisan config:cache
 ls -l storage/api-docs/
 
 echo "Testing API endpoint..."

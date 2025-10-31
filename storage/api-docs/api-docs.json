@@ -18,6 +18,93 @@
         }
     ],
     "paths": {
+        "/api/v1/clients/telephone/{telephone}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Obtenir un client par téléphone",
+                "description": "Retourne un client par son numéro de téléphone.",
+                "operationId": "getClientByTelephone",
+                "parameters": [
+                    {
+                        "name": "telephone",
+                        "in": "path",
+                        "description": "Numéro de téléphone du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opération réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client récupéré avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ClientResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client non trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/comptes": {
             "get": {
                 "tags": [
@@ -54,10 +141,10 @@
                     {
                         "name": "sort",
                         "in": "query",
-                        "description": "Champ de tri (e.g., 'dateCreation', 'solde')",
+                        "description": "Champ de tri (e.g., 'date_creation', 'solde')",
                         "schema": {
                             "type": "string",
-                            "default": "dateCreation"
+                            "default": "date_creation"
                         }
                     },
                     {
@@ -304,10 +391,10 @@
                     {
                         "name": "sort",
                         "in": "query",
-                        "description": "Champ de tri (e.g., 'dateCreation', 'solde')",
+                        "description": "Champ de tri (e.g., 'date_creation', 'solde')",
                         "schema": {
                             "type": "string",
-                            "default": "dateCreation"
+                            "default": "date_creation"
                         }
                     },
                     {
@@ -504,6 +591,93 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Compte supprimé avec succès."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Compte non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte non trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/comptes/numero/{numero}": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Obtenir un compte par numéro",
+                "description": "Retourne un compte bancaire par son numéro.",
+                "operationId": "getCompteByNumero",
+                "parameters": [
+                    {
+                        "name": "numero",
+                        "in": "path",
+                        "description": "Numéro du compte à récupérer",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opération réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte récupéré avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CompteResource"
                                         }
                                     },
                                     "type": "object"
@@ -968,6 +1142,71 @@
     },
     "components": {
         "schemas": {
+            "User": {
+                "title": "User",
+                "description": "Représentation d'un utilisateur",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Admin User"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "admin@example.com"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "admin",
+                            "client"
+                        ],
+                        "example": "admin"
+                    }
+                },
+                "type": "object"
+            },
+            "ClientResource": {
+                "title": "Client Resource",
+                "description": "Représentation d'un client",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "uuid"
+                    },
+                    "titulaire": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "John Doe"
+                    },
+                    "nci": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "1234567890123"
+                    },
+                    "email": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "john.doe@example.com"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "771234567"
+                    },
+                    "adresse": {
+                        "type": "string",
+                        "readOnly": "true",
+                        "example": "Dakar, Sénégal"
+                    }
+                },
+                "type": "object"
+            },
             "CompteResource": {
                 "title": "Compte Resource",
                 "description": "Représentation d'un compte bancaire",
@@ -977,7 +1216,7 @@
                         "readOnly": "true",
                         "example": 1
                     },
-                    "numeroCompte": {
+                    "numero_compte": {
                         "type": "string",
                         "readOnly": "true",
                         "example": "C12345678"
@@ -1003,7 +1242,7 @@
                         "readOnly": "true",
                         "example": "XOF"
                     },
-                    "dateCreation": {
+                    "date_creation": {
                         "type": "string",
                         "format": "date-time",
                         "readOnly": "true",
@@ -1020,14 +1259,14 @@
                         "example": []
                     },
                     "date_debut_blocage": {
-                        "description": "Date de début du blocage du compte",
+                        "description": "Date de début du blocage du compte (uniquement pour les comptes épargne)",
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-11-01T10:00:00Z",
                         "nullable": "true"
                     },
                     "date_fin_blocage": {
-                        "description": "Date de fin du blocage du compte",
+                        "description": "Date de fin du blocage du compte (uniquement pour les comptes épargne)",
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-12-01T10:00:00Z",
@@ -1042,6 +1281,44 @@
                         "type": "string",
                         "readOnly": "true",
                         "example": "Nom Prénom Client"
+                    }
+                },
+                "type": "object"
+            },
+            "DashboardResource": {
+                "title": "Dashboard Resource",
+                "description": "Représentation du dashboard pour admin ou client",
+                "properties": {
+                    "total_comptes": {
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "balance": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150000.5
+                    },
+                    "total_transactions": {
+                        "type": "integer",
+                        "example": 150
+                    },
+                    "recent_transactions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TransactionResource"
+                        }
+                    },
+                    "comptes_today": {
+                        "description": "Pour admin uniquement",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "comptes": {
+                        "description": "Pour client uniquement",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CompteResource"
+                        }
                     }
                 },
                 "type": "object"
@@ -1066,6 +1343,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Clients",
+            "description": "Clients"
+        },
         {
             "name": "Comptes",
             "description": "Comptes"
