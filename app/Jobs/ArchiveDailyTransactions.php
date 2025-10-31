@@ -83,7 +83,7 @@ class ArchiveDailyTransactions implements ShouldQueue
      */
     private function getTransactionsToArchive(): Collection
     {
-        return Transaction::whereDate('dateTransaction', $this->targetDate)
+        return Transaction::whereDate('date_transaction', $this->targetDate)
             ->where('archived', false)
             ->with('compte.client') // Charger les relations pour l'archivage
             ->get();
