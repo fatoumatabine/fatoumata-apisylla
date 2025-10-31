@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CompteController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +18,7 @@ use App\Http\Controllers\ClientController;
 |
 */
 
-Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanctum'
+Route::prefix('v1')->middleware('auth:api')->group(function () {
     /**
      * @OA\Get(
      *     path="/api/v1/comptes",
@@ -363,8 +364,13 @@ Route::prefix('v1')->group(function () { // Réactiver le middleware 'auth:sanct
      * )
      */
      Route::get('/comptes/{compteId}/transactions', [TransactionController::class, 'index']);
+      Route::get('/comptes/{compteId}/transactions/stats', [TransactionController::class, 'stats']);
+      Route::post('/comptes/{compteId}/transactions', [TransactionController::class, 'store']);
+      Route::get('/comptes/{compteId}/transactions/{transactionId}', [TransactionController::class, 'show']);
 
-     Route::get('/clients/telephone/{telephone}', [ClientController::class, 'showByTelephone']);
+      Route::get('/clients/telephone/{telephone}', [ClientController::class, 'showByTelephone']);
+
+      Route::get('/dashboard', [DashboardController::class, 'index']);
 
      /**
      * @OA\Post(

@@ -124,4 +124,35 @@ class TransactionController extends Controller
             return $this->error('Erreur lors de la récupération de la transaction', 500);
         }
     }
+
+    /**
+     * Statistiques d'un compte
+     */
+    public function stats(string $compteId)
+    {
+        try {
+            $compte = Compte::find($compteId);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé', 404);
+            }
+
+            // Vérifier autorisation : admin ou propriétaire
+            $user = auth()->user();
+            if (!$user->isAdmin() && $compte->client_id !== $user->id) {
+                return $this->error('Accès non autorisé', 403);
+            }
+
+            $stats = $this->transactionService->getAccountStats($compteId);
+
+            return $this->success($stats, 'Statistiques récupérées avec succès');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des statistiques', [
+                'compte_id' => $compteId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->error('Erreur lors de la récupération des statistiques', 500);
+        }
+    }
 }

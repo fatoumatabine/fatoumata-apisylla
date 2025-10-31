@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\TransactionArchiveInterface;
 use App\Models\Transaction;
+use App\Models\Compte;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -125,10 +126,55 @@ class TransactionService
      */
     public function createTransaction(array $data): Transaction
     {
+        $compte = Compte::find($data['compte_id']);
+
+        if (!$compte) {
+            throw new \Exception('Compte non trouvé.');
+        }
+
+        // Pas de transaction sur compte supprimé (soft deleted)
+        if ($compte->trashed()) {
+            throw new \Exception('Transaction impossible sur un compte supprimé.');
+        }
+
+        // Pour retrait
+        if ($data['type'] === 'debit') {
+            // Vérifier solde disponible
+            if ($compte->solde < $data['montant']) {
+                throw new \Exception('Solde insuffisant pour le retrait.');
+            }
+
+            // Pas de retrait sur compte épargne bloqué
+            if ($compte->type === 'epargne' && $compte->statut === 'bloque') {
+                throw new \Exception('Retrait impossible sur un compte épargne bloqué.');
+            }
+        }
+
+        // Pour dépôt sur compte épargne bloqué : possible
+        // (pas de restriction pour dépôt)
+
         $transaction = new Transaction($data);
         $transaction->save();
 
         return $transaction;
+    }
+
+    /**
+     * Récupérer les statistiques d'un compte
+     */
+    public function getAccountStats(string $compteId): array
+    {
+        $totalDepot = Transaction::where('compte_id', $compteId)->where('type', 'credit')->sum('montant');
+        $totalRetrait = Transaction::where('compte_id', $compteId)->where('type', 'debit')->sum('montant');
+        $nombreTransactions = Transaction::where('compte_id', $compteId)->count();
+        $derniereTransaction = Transaction::where('compte_id', $compteId)->orderBy('date_transaction', 'desc')->first();
+
+        return [
+            'total_depot' => $totalDepot,
+            'total_retrait' => $totalRetrait,
+            'nombre_transactions' => $nombreTransactions,
+            'derniere_transaction' => $derniereTransaction,
+        ];
     }
 
     /**
