@@ -21,6 +21,16 @@ use App\Http\Requests\UpdateCompteRequest;
  *      )
  * )
  *
+ * @OA\Schema(
+ *     schema="User",
+ *     title="User",
+ *     description="Représentation d'un utilisateur",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Admin User"),
+ *     @OA\Property(property="email", type="string", format="email", example="admin@example.com"),
+ *     @OA\Property(property="role", type="string", enum={"admin", "client"}, example="admin")
+ * )
+ *
  * @OA\Server(
  *      url=L5_SWAGGER_CONST_HOST,
  *      description="Serveur API"
