@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Compte;
 use App\Models\Transaction;
 use App\Http\Traits\ApiResponseTrait;
+use App\Http\Resources\DashboardResource;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -32,13 +33,15 @@ class DashboardController extends Controller
         $recentTransactions = Transaction::with('compte')->orderBy('date_transaction', 'desc')->limit(10)->get();
         $comptesToday = Compte::whereDate('date_creation', today())->count();
 
-        return $this->success([
+        $data = [
             'total_comptes' => $totalComptes,
             'balance' => $balance,
             'total_transactions' => $totalTransactions,
             'recent_transactions' => $recentTransactions,
             'comptes_today' => $comptesToday,
-        ], 'Dashboard admin récupéré');
+        ];
+
+        return $this->success(new DashboardResource($data), 'Dashboard admin récupéré');
     }
 
     private function clientDashboard()
@@ -66,12 +69,14 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        return $this->success([
+        $data = [
             'total_comptes' => $totalComptes,
             'balance' => $balance,
             'total_transactions' => $totalTransactions,
             'recent_transactions' => $recentTransactions,
             'comptes' => $comptes,
-        ], 'Dashboard client récupéré');
+        ];
+
+        return $this->success(new DashboardResource($data), 'Dashboard client récupéré');
     }
 }

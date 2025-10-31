@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\ArchiveExpiredBlockedAccounts;
 use App\Jobs\UnarchiveExpiredBlockedAccounts;
+use App\Jobs\ArchiveWeeklyTransactions;
 
 class Kernel extends ConsoleKernel
 {
@@ -20,6 +21,9 @@ class Kernel extends ConsoleKernel
 
         // Archivage des transactions de la journée
         $schedule->command('transactions:archive-daily')->dailyAt('01:00'); // Exécute tous les jours à 01h00
+
+        // Archivage hebdomadaire des transactions vers MongoDB
+        $schedule->job(new ArchiveWeeklyTransactions)->weeklyOn(1, '02:00'); // Tous les lundis à 02h00
     }
 
     /**

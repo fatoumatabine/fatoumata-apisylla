@@ -21,8 +21,11 @@ class EventServiceProvider extends ServiceProvider
     \App\Events\ClientCreated::class => [
     \App\Listeners\SendClientNotification::class,
     ],
-        \App\Events\TransactionCreated::class => [
-            \App\Listeners\SendTransactionNotification::class,
+    \App\Events\TransactionCreated::class => [
+    \App\Listeners\SendTransactionNotification::class,
+    ],
+        \App\Events\TransactionCreatedEvent::class => [
+            \App\Listeners\SendTransactionSmsNotification::class,
         ],
     ];
 

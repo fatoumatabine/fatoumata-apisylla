@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Contracts\TransactionArchiveInterface;
 use App\Models\Transaction;
 use App\Models\Compte;
+use App\Events\TransactionCreatedEvent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Event;
 use Carbon\Carbon;
 
 class TransactionService
@@ -155,6 +157,9 @@ class TransactionService
 
         $transaction = new Transaction($data);
         $transaction->save();
+
+        // Dispatch event for SMS notification
+        Event::dispatch(new TransactionCreatedEvent($transaction));
 
         return $transaction;
     }
