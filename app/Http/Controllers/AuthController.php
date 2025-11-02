@@ -9,6 +9,20 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Traits\ApiResponseTrait;
 use Laravel\Passport\Passport;
 
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     title="User",
+ *     description="Représentation d'un utilisateur",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Admin User"),
+ *     @OA\Property(property="email", type="string", format="email", example="admin@example.com"),
+ *     @OA\Property(property="role", type="string", enum={"admin", "client"}, example="admin"),
+ *     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class AuthController extends Controller
 {
     use ApiResponseTrait;
