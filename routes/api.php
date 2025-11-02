@@ -374,7 +374,8 @@ Route::prefix('v1')->group(function () {
      *         description="Erreur serveur"
      *     )
      * )
-     */
+     * )
+      */
      Route::get('/comptes/{compteId}/transactions', [TransactionController::class, 'index']);
       Route::get('/comptes/{compteId}/transactions/stats', [TransactionController::class, 'stats']);
       Route::post('/comptes/{compteId}/transactions', [TransactionController::class, 'store']);
@@ -426,4 +427,4 @@ Route::prefix('v1')->group(function () {
      *     )
      * )
      */
-     });
+});
