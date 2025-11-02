@@ -93,13 +93,15 @@ class AuthController extends Controller
             return $this->error('Invalid credentials', 401, 'INVALID_CREDENTIALS');
         }
 
-        // Create access token (Sanctum)
+        // Create access token (Passport)
         $token = $user->createToken('API Token');
 
         return $this->success([
             'user' => $user,
-            'access_token' => $token->plainTextToken,
+            'access_token' => $token->accessToken,
+            'refresh_token' => $token->refreshToken,
             'token_type' => 'Bearer',
+            'expires_in' => 3600, // 1 hour
         ], 'Login successful');
     }
 

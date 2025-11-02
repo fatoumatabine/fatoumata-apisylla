@@ -23,16 +23,16 @@ Route::prefix('v1')->group(function () {
 
     // Auth endpoints - anciennes routes pour compatibilité
     Route::post('/login', [AuthController::class, 'login']);
-    Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+    Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
 
     // Auth endpoints - nouvelles routes organisées
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
-        Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+        Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
     });
 
     // Routes protégées
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth:api')->group(function () {
     /**
      * @OA\Get(
      *     path="/api/v1/comptes",
