@@ -255,6 +255,7 @@ Route::prefix('v1')->group(function () {
      *      summary="Modifier les informations d'un compte",
      *      description="Met à jour les informations d'un compte et de son client associé. Tous les champs sont optionnels, mais au moins un champ de modification doit être fourni.",
      // *      security={{"bearerAuth": {}}},
+     *      security={{"bearerAuth": {}}},
      *      @OA\Parameter(
      *          name="compteId",
      *          in="path",
@@ -426,3 +427,4 @@ Route::prefix('v1')->group(function () {
      * )
      */
  });
+});

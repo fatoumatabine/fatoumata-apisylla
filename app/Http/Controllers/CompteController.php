@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compte;
-use Illuminate\Http\Request; // Ré-importation de Request
-use App\Http\Requests\ListComptesRequest; // Importation de la nouvelle requête
+use Illuminate\Http\Request;
 use App\Http\Requests\StoreCompteRequest;
 use App\Http\Resources\CompteResource;
 use App\Http\Traits\ApiResponseTrait;
@@ -19,16 +18,6 @@ use App\Http\Requests\UpdateCompteRequest;
  *      @OA\Contact(
  *          email="fatoumata.sylla@example.com"
  *      )
- * )
- *
- * @OA\Schema(
- *     schema="User",
- *     title="User",
- *     description="Représentation d'un utilisateur",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="Admin User"),
- *     @OA\Property(property="email", type="string", format="email", example="admin@example.com"),
- *     @OA\Property(property="role", type="string", enum={"admin", "client"}, example="admin")
  * )
  *
  * @OA\Server(
@@ -49,24 +38,6 @@ use App\Http\Requests\UpdateCompteRequest;
 class CompteController extends Controller
 {
     use ApiResponseTrait;
-
-    /**
-     * Check if the authenticated user can access a specific account
-     */
-    private function canAccessAccount(Compte $compte, $user): bool
-    {
-        // Admins can access all accounts
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        // Clients can only access their own accounts
-        if ($user->isClient()) {
-            return $compte->client && $compte->client->user_id === $user->id;
-        }
-
-        return false;
-    }
 
     /**
      * @OA\Get(
@@ -97,8 +68,8 @@ class CompteController extends Controller
      *      @OA\Parameter(
      *          name="sort",
      *          in="query",
-     *          description="Champ de tri (e.g., 'date_creation', 'solde')",
-     *          @OA\Schema(type="string", default="date_creation")
+     *          description="Champ de tri (e.g., 'dateCreation', 'solde')",
+     *          @OA\Schema(type="string", default="dateCreation")
      *      ),
      *      @OA\Parameter(
      *          name="order",
@@ -133,65 +104,36 @@ class CompteController extends Controller
      *      )
      * )
      */
-    public function index(ListComptesRequest $request)
+    public function index(Request $request)
     {
-        $validated = $request->validated();
-
-        $user = $request->user(); // Récupère l'utilisateur authentifié
-
         $query = Compte::query();
 
-        // Si l'utilisateur est un client, il ne voit que ses propres comptes
-        if ($user && $user->isClient()) {
-            $query->whereHas('client', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        }
-
         // Filtrer par type
-        if (isset($validated['type'])) {
-            $query->where('type', $validated['type']);
+        if ($request->has('type')) {
+            $query->where('type', $request->input('type'));
         }
 
         // Filtrer par statut
-        if (isset($validated['statut'])) {
-            $query->where('statut', $validated['statut']);
-        }
-
-        // Exclure les comptes bloqués et fermés
-        $query->where('statut', '!=', 'bloque')
-              ->where('statut', '!=', 'ferme');
-
-        // Filtrer par numéro de compte (si nécessaire, ajouter la validation dans ListComptesRequest)
-        if (isset($validated['numeroCompte'])) {
-            $query->where('numero_compte', $validated['numeroCompte']);
+        if ($request->has('statut')) {
+            $query->where('statut', $request->input('statut'));
         }
 
         // Recherche par titulaire ou numéro
-        if (isset($validated['search'])) {
-            $searchTerm = $validated['search'];
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('titulaire', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('numero_compte', 'like', '%' . $searchTerm . '%');
+                  ->orWhere('numeroCompte', 'like', '%' . $searchTerm . '%');
             });
         }
 
-        // Mapping des champs de tri
-        $sortMapping = [
-            'dateCreation' => 'date_creation',
-            'numeroCompte' => 'numero_compte',
-            // add others if needed
-        ];
-
-        $sortField = $validated['sort'] ?? 'date_creation';
-        if (isset($sortMapping[$sortField])) {
-            $sortField = $sortMapping[$sortField];
-        }
-        $sortOrder = $validated['order'] ?? 'desc';
+        // Tri
+        $sortField = $request->input('sort', 'dateCreation');
+        $sortOrder = $request->input('order', 'desc');
         $query->orderBy($sortField, $sortOrder);
 
         // Pagination
-        $limit = $validated['limit'] ?? 10;
+        $limit = $request->input('limit', 10);
         $limit = min($limit, 100); // Max 100 items per page
         $comptes = $query->with('client')->paginate($limit);
 
@@ -283,42 +225,31 @@ class CompteController extends Controller
                     'email' => $data['client']['email'],
                     'telephone' => $data['client']['telephone'],
                     'adresse' => $data['client']['adresse'],
-                    'password' => $password,
-                    'code' => $code,
+                    'password' => $password, // Le hachage est géré par le modèle Client
+                    'code' => $code, // Le hachage est géré par le modèle Client
                 ]);
                 Log::info('Nouveau client créé avec ID: ' . $client->id);
-
-                // Dispatch event for client creation
-                try {
-                \Illuminate\Support\Facades\Event::dispatch(new \App\Events\ClientCreated($client, $password, $code));
-                } catch (\Exception $e) {
-                Log::warning('Failed to dispatch ClientCreated event: ' . $e->getMessage());
-                }
             }
 
             // Générer numéro de compte unique
             do {
-                $numero_compte = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
-            } while (Compte::where('numero_compte', $numero_compte)->exists());
+                $numeroCompte = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+            } while (Compte::where('numeroCompte', $numeroCompte)->exists());
 
             // Créer le compte
             $compte = Compte::create([
-                'numero_compte' => $numero_compte,
+                'numeroCompte' => $numeroCompte,
                 'titulaire' => $client->titulaire,
                 'type' => $data['type'],
                 'solde' => $data['solde'], // Correction: utiliser 'solde' au lieu de 'soldeInitial'
                 'devise' => $data['devise'],
                 'statut' => 'actif',
-                'date_creation' => now(),
+                'dateCreation' => now(),
                 'client_id' => $client->id,
             ]);
 
             // Envoyer email et SMS (via event/listener)
-            try {
-                \Illuminate\Support\Facades\Event::dispatch(new \App\Events\CompteCreated($compte, $client, $password, $code));
-            } catch (\Exception $e) {
-                Log::warning('Failed to dispatch CompteCreated event: ' . $e->getMessage());
-            }
+            \Illuminate\Support\Facades\Event::dispatch(new \App\Events\ClientCreated($client, $password, $code));
 
             return $this->success(new CompteResource($compte), 'Compte créé avec succès', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -347,8 +278,8 @@ class CompteController extends Controller
      *      @OA\Parameter(
      *          name="sort",
      *          in="query",
-     *          description="Champ de tri (e.g., 'date_creation', 'solde')",
-     *          @OA\Schema(type="string", default="date_creation")
+     *          description="Champ de tri (e.g., 'dateCreation', 'solde')",
+     *          @OA\Schema(type="string", default="dateCreation")
      *      ),
      *      @OA\Parameter(
      *          name="order",
@@ -391,23 +322,15 @@ class CompteController extends Controller
          if ($request->has('search')) {
              $searchTerm = $request->input('search');
              $query->where(function ($q) use ($searchTerm) {
-             $q->where('titulaire', 'like', '%' . $searchTerm . '%')
-             ->orWhere('numero_compte', 'like', '%' . $searchTerm . '%');
+                 $q->where('titulaire', 'like', '%' . $searchTerm . '%')
+                   ->orWhere('numeroCompte', 'like', '%' . $searchTerm . '%');
              });
          }
 
-         // Mapping des champs de tri
-         $sortMapping = [
-             'dateCreation' => 'date_creation',
-             'numeroCompte' => 'numero_compte',
-          ];
-
-          $sortField = $request->input('sort', 'date_creation');
-          if (isset($sortMapping[$sortField])) {
-              $sortField = $sortMapping[$sortField];
-          }
-          $sortOrder = $request->input('order', 'desc');
-          $query->orderBy($sortField, $sortOrder);
+         // Tri
+         $sortField = $request->input('sort', 'dateCreation');
+         $sortOrder = $request->input('order', 'desc');
+         $query->orderBy($sortField, $sortOrder);
 
          // Pagination
          $limit = $request->input('limit', 10);
@@ -459,88 +382,18 @@ class CompteController extends Controller
      *      )
      * )
      */
-    public function show(Request $request, string $id)
+    public function show(string $id)
     {
-    try {
-    $compte = Compte::with('client')->find($id);
+        try {
+            $compte = Compte::with('client')->find($id);
 
-    if (!$compte) {
-    return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
-    }
-
-    // Check authorization
-    $user = $request->user();
-    if (!$this->canAccessAccount($compte, $user)) {
-        return $this->error('Accès non autorisé à ce compte.', 403, 'ACCESS_DENIED');
-    }
-
-    return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
-    } catch (\Exception $e) {
-    Log::error('Erreur lors de la récupération du compte: ' . $e->getMessage());
-    return $this->error('Erreur interne du serveur lors de la récupération du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
-    }
-    }
-
-    /**
-     * @OA\Get(
-     *      path="/api/v1/comptes/numero/{numero}",
-     *      operationId="getCompteByNumero",
-     *      tags={"Comptes"},
-     *      summary="Obtenir un compte par numéro",
-     *      description="Retourne un compte bancaire par son numéro.",
-     *      security={{"bearerAuth": {}}},
-     *      @OA\Parameter(
-     *          name="numero",
-     *          in="path",
-     *          required=true,
-     *          description="Numéro du compte à récupérer",
-     *          @OA\Schema(type="string")
-     *      ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Opération réussie",
-     *          @OA\JsonContent(
-     *              type="object",
-     *              @OA\Property(property="success", type="boolean", example=true),
-     *              @OA\Property(property="message", type="string", example="Compte récupéré avec succès"),
-     *              @OA\Property(property="data", ref="#/components/schemas/CompteResource")
-     *          )
-     *      ),
-     *      @OA\Response(
-     *          response=404,
-     *          description="Compte non trouvé",
-     *          @OA\JsonContent(
-     *              @OA\Property(property="success", type="boolean", example=false),
-     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
-     *          )
-     *      ),
-     *      @OA\Response(
-     *          response=401,
-     *          description="Non authentifié",
-     *          @OA\JsonContent(
-     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *          )
-     *      )
-     * )
-     */
-    public function showByNumero(Request $request, string $numero)
-    {
-    try {
-    $compte = Compte::with('client')->numero($numero)->first();
-
-    if (!$compte) {
-    return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
-    }
-
-    // Check authorization
-        $user = $request->user();
-    if (!$this->canAccessAccount($compte, $user)) {
-        return $this->error('Accès non autorisé à ce compte.', 403, 'ACCESS_DENIED');
-        }
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
 
             return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la récupération du compte par numéro: ' . $e->getMessage());
+            Log::error('Erreur lors de la récupération du compte: ' . $e->getMessage());
             return $this->error('Erreur interne du serveur lors de la récupération du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
         }
     }
@@ -555,7 +408,7 @@ class CompteController extends Controller
     public function update(UpdateCompteRequest $request, string $compteId)
     {
         try {
-            $compte = Compte::find($compteId);
+            $compte = Compte::where('id', $compteId)->first();
 
             if (!$compte) {
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND', [], $request->fullUrl());
@@ -650,10 +503,6 @@ class CompteController extends Controller
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
             }
 
-            if ($compte->statut !== 'actif') {
-                return $this->error('Seuls les comptes actifs peuvent être supprimés.', 422, 'INVALID_DELETE_STATUS');
-            }
-
             $compte->forceDelete(); // Supprime définitivement le compte
 
             return $this->success(null, 'Compte supprimé avec succès.');
@@ -730,8 +579,8 @@ class CompteController extends Controller
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
             }
 
-            if ($compte->type !== 'epargne' || $compte->statut !== 'actif') {
-                return $this->error('Seuls les comptes épargne actifs peuvent être bloqués.', 422, 'INVALID_ACCOUNT_TYPE_OR_STATUS');
+            if ($compte->type !== 'epargne') {
+                return $this->error('Seuls les comptes épargne peuvent être bloqués.', 422, 'INVALID_ACCOUNT_TYPE');
             }
 
             $request->validate([
@@ -878,12 +727,6 @@ class CompteController extends Controller
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
             }
 
-            // Nouvelle validation pour l'archivage
-            // Seuls les comptes épargne bloqués dont la date de début de blocage est passée peuvent être archivés.
-            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || !$compte->date_debut_blocage || $compte->date_debut_blocage->isFuture()) {
-                return $this->error('Seuls les comptes épargne bloqués dont la date de début de blocage est échue peuvent être archivés.', 422, 'INVALID_ARCHIVE_CRITERIA');
-            }
-
             $compte->archived = true;
             $compte->save();
 
@@ -945,13 +788,7 @@ class CompteController extends Controller
             $compte = Compte::withoutGlobalScope(\App\Scopes\NonArchivedScope::class)->find($id);
 
             if (!$compte) {
-            return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
-            }
-
-            // Validation pour le désarchivage
-            // Seuls les comptes épargne bloqués dont la date de fin de blocage est passée peuvent être désarchivés.
-            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || !$compte->date_fin_blocage || $compte->date_fin_blocage->isFuture()) {
-                return $this->error('Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être désarchivés.', 422, 'INVALID_UNARCHIVE_CRITERIA');
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
             }
 
             $compte->archived = false;

@@ -59,6 +59,7 @@ services:
       #   value: your_twilio_sid # À remplacer par votre SID Twilio
       # - key: TWILIO_TOKEN
       #   value: your_twilio_token # À remplacer par votre Token Twilio
+>>>>>>> c72b9289545d203b5c46a4a7ff487701a6f244ef
       - key: TWILIO_FROM
 
 

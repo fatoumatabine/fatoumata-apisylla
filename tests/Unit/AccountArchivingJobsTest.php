@@ -96,7 +96,7 @@ class AccountArchivingJobsTest extends TestCase
 
         // Vérifier que toutes les transactions du compte sont désarchivées
         $compte->transactions->each(function ($transaction) {
-            $this->assertFalse($transaction->fresh()->archived);
+        $this->assertFalse($transaction->fresh()->archived);
         });
 
         // Créer un compte archivé mais dont la date de fin de blocage n'est pas échue
