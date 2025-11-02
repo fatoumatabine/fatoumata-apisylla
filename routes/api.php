@@ -23,11 +23,13 @@ Route::prefix('v1')->group(function () {
 
     // Auth endpoints - anciennes routes pour compatibilité
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
 
     // Auth endpoints - nouvelles routes organisées
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/refresh', [AuthController::class, 'refresh']);
         Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
     });
 

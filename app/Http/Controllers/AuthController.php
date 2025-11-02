@@ -214,7 +214,12 @@ class AuthController extends Controller
     */
     public function logout(Request $request)
     {
-        $request->user()->token()->revoke();
+        // Get the authenticated user without triggering recursion
+        $user = $request->user('api');
+        if ($user) {
+            // Revoke the current access token
+            $request->user('api')->token()->revoke();
+        }
 
         return $this->success(null, 'Logged out successfully');
     }
