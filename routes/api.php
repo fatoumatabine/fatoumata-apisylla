@@ -21,7 +21,11 @@ use App\Http\Controllers\AuthController;
 
 Route::prefix('v1')->group(function () {
 
-    // Auth endpoints
+    // Auth endpoints - anciennes routes pour compatibilité
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+
+    // Auth endpoints - nouvelles routes organisées
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
