@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Hash;
 
 class Client extends Model
@@ -23,6 +24,7 @@ class Client extends Model
         'adresse',
         'password',
         'code',
+        'user_id',
     ];
 
     protected $hidden = [
@@ -52,5 +54,10 @@ class Client extends Model
     public function comptes(): HasMany
     {
         return $this->hasMany(Compte::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

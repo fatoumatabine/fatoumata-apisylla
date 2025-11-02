@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['GET', 'POST', 'PATCH', 'DELETE'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://front.banque.example.com')],
+    'allowed_origins' => ['http://front.banque.example.com'],
 
     'allowed_origins_patterns' => [],
 

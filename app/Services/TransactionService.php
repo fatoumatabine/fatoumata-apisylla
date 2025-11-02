@@ -58,7 +58,7 @@ class TransactionService
     /**
      * Récupérer les transactions archivées
      */
-    private function getArchivedTransactions(string $compteId, array $filters = []): Collection
+    public function getArchivedTransactions(string $compteId, array $filters = []): Collection
     {
         if (!$this->archiveService->isConnected()) {
             Log::warning('Service d\'archivage non disponible, seules les transactions locales seront retournées');

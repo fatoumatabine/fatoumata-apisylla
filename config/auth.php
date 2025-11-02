@@ -44,8 +44,8 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
-        'api' => [ // Ajouter le guard Passport
-            'driver' => 'passport',
+        'api' => [ // Utiliser Sanctum pour l'API
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
     ],

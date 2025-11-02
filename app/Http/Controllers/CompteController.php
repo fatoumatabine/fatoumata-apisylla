@@ -51,6 +51,24 @@ class CompteController extends Controller
     use ApiResponseTrait;
 
     /**
+     * Check if the authenticated user can access a specific account
+     */
+    private function canAccessAccount(Compte $compte, $user): bool
+    {
+        // Admins can access all accounts
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Clients can only access their own accounts
+        if ($user->isClient()) {
+            return $compte->client && $compte->client->user_id === $user->id;
+        }
+
+        return false;
+    }
+
+    /**
      * @OA\Get(
      *      path="/api/v1/comptes",
      *      operationId="getComptesList",
@@ -124,9 +142,9 @@ class CompteController extends Controller
         $query = Compte::query();
 
         // Si l'utilisateur est un client, il ne voit que ses propres comptes
-        if ($user && $user->role === 'client') {
+        if ($user && $user->isClient()) {
             $query->whereHas('client', function ($q) use ($user) {
-                $q->where('email', $user->email); // Supposons que l'email du client est le même que celui de l'utilisateur
+                $q->where('user_id', $user->id);
             });
         }
 
@@ -269,6 +287,13 @@ class CompteController extends Controller
                     'code' => $code,
                 ]);
                 Log::info('Nouveau client créé avec ID: ' . $client->id);
+
+                // Dispatch event for client creation
+                try {
+                \Illuminate\Support\Facades\Event::dispatch(new \App\Events\ClientCreated($client, $password, $code));
+                } catch (\Exception $e) {
+                Log::warning('Failed to dispatch ClientCreated event: ' . $e->getMessage());
+                }
             }
 
             // Générer numéro de compte unique
@@ -289,7 +314,11 @@ class CompteController extends Controller
             ]);
 
             // Envoyer email et SMS (via event/listener)
-            \Illuminate\Support\Facades\Event::dispatch(new \App\Events\CompteCreated($compte, $client, $password, $code));
+            try {
+                \Illuminate\Support\Facades\Event::dispatch(new \App\Events\CompteCreated($compte, $client, $password, $code));
+            } catch (\Exception $e) {
+                Log::warning('Failed to dispatch CompteCreated event: ' . $e->getMessage());
+            }
 
             return $this->success(new CompteResource($compte), 'Compte créé avec succès', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -430,13 +459,19 @@ class CompteController extends Controller
      *      )
      * )
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
     try {
     $compte = Compte::with('client')->find($id);
 
     if (!$compte) {
     return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+    }
+
+    // Check authorization
+    $user = $request->user();
+    if (!$this->canAccessAccount($compte, $user)) {
+        return $this->error('Accès non autorisé à ce compte.', 403, 'ACCESS_DENIED');
     }
 
     return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
@@ -488,14 +523,20 @@ class CompteController extends Controller
      *      )
      * )
      */
-    public function showByNumero(string $numero)
+    public function showByNumero(Request $request, string $numero)
     {
-        try {
-            $compte = Compte::with('client')->numero($numero)->first();
+    try {
+    $compte = Compte::with('client')->numero($numero)->first();
 
-            if (!$compte) {
-                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
-            }
+    if (!$compte) {
+    return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+    }
+
+    // Check authorization
+        $user = $request->user();
+    if (!$this->canAccessAccount($compte, $user)) {
+        return $this->error('Accès non autorisé à ce compte.', 403, 'ACCESS_DENIED');
+        }
 
             return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
         } catch (\Exception $e) {

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\Compte;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
 use App\Http\Resources\TransactionResource;
 use App\Http\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionController extends Controller
 {
@@ -137,10 +139,10 @@ class TransactionController extends Controller
                 return $this->error('Compte non trouvé', 404);
             }
 
-            // Vérifier autorisation : admin ou propriétaire
-            $user = auth()->user();
-            if (!$user->isAdmin() && $compte->client_id !== $user->id) {
-                return $this->error('Accès non autorisé', 403);
+            // Vérifier autorisation : admin ou propriétaire du compte
+            $user = Auth::user();
+            if ($user->isClient() && (!$user->client || $user->client->id !== $compte->client_id)) {
+            return $this->error('Accès non autorisé', 403);
             }
 
             $stats = $this->transactionService->getAccountStats($compteId);

@@ -102,9 +102,8 @@ class CompteCreationTest extends TestCase
             'client_id' => $existingClient->id,
         ]);
 
-        Event::assertDispatched(ClientCreated::class, function ($event) use ($existingClient) {
-            return $event->client->id === $existingClient->id;
-        });
+        // ClientCreated event should not be dispatched for existing clients
+        Event::assertNotDispatched(ClientCreated::class);
     }
 
     /** @test */
