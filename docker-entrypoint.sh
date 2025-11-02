@@ -47,7 +47,7 @@ if [ -n "$PASSPORT_PUBLIC_KEY" ]; then
 fi
 
 echo "Generating Swagger documentation..."
-php artisan l5-swagger:generate
+php artisan l5-swagger:generate || echo "Warning: Swagger generation failed, continuing..."
 php artisan config:cache
 ls -l storage/api-docs/
 
