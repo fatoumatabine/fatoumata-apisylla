@@ -24,12 +24,11 @@ Route::prefix('v1')->group(function () {
     // Auth endpoints
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
-        Route::post('/refresh', [AuthController::class, 'refresh']);
-        Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
+        Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
     });
 
     // Routes protégées
-    Route::middleware('auth:api')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
     /**
      * @OA\Get(
      *     path="/api/v1/comptes",
