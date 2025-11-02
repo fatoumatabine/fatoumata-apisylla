@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            PassportClientSeeder::class,
+            // PassportClientSeeder::class, // Désactivé car on utilise Sanctum
             UserSeeder::class,
             ClientSeeder::class,
             CompteSeeder::class,
