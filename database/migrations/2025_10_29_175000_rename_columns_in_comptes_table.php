@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('comptes', function (Blueprint $table) {
-            $table->renameColumn('numerocompte', 'numero_compte');
-            $table->renameColumn('datecreation', 'date_creation');
+            // Les colonnes sont déjà nommées correctement, cette migration est redondante.
+            // $table->renameColumn('numerocompte', 'numero_compte');
+            // $table->renameColumn('datecreation', 'date_creation');
         });
     }
 

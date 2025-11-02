@@ -8,16 +8,24 @@ use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Compte;
 use Carbon\Carbon;
+use App\Models\User; // Importation du modèle User
+use Laravel\Passport\Passport; // Importation de Passport
 
 class AccountManagementTest extends TestCase
 {
     use RefreshDatabase;
     use WithFaker;
 
+    protected User $user;
+
     protected function setUp(): void
     {
         parent::setUp();
-        // Create some test data
+        // Créer un utilisateur et un jeton Passport pour l'authentification des tests
+        $this->user = User::factory()->create(['role' => 'admin']); // Créer un admin pour les tests
+        Passport::actingAs($this->user);
+
+        // Créer des données de test
         Client::factory()->count(5)->create();
         Compte::factory()->count(10)->create();
     }

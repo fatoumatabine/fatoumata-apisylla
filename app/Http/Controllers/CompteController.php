@@ -119,7 +119,16 @@ class CompteController extends Controller
     {
         $validated = $request->validated();
 
+        $user = $request->user(); // Récupère l'utilisateur authentifié
+
         $query = Compte::query();
+
+        // Si l'utilisateur est un client, il ne voit que ses propres comptes
+        if ($user && $user->role === 'client') {
+            $query->whereHas('client', function ($q) use ($user) {
+                $q->where('email', $user->email); // Supposons que l'email du client est le même que celui de l'utilisateur
+            });
+        }
 
         // Filtrer par type
         if (isset($validated['type'])) {
@@ -136,17 +145,16 @@ class CompteController extends Controller
               ->where('statut', '!=', 'ferme');
 
         // Filtrer par numéro de compte (si nécessaire, ajouter la validation dans ListComptesRequest)
-        if ($request->has('numeroCompte')) { // Garder pour l'instant si non validé dans la requête
-            $numeroCompte = $request->input('numeroCompte');
-            $query->where('numeroCompte', $numeroCompte);
+        if (isset($validated['numeroCompte'])) {
+            $query->where('numero_compte', $validated['numeroCompte']);
         }
 
         // Recherche par titulaire ou numéro
         if (isset($validated['search'])) {
             $searchTerm = $validated['search'];
             $query->where(function ($q) use ($searchTerm) {
-            $q->where('titulaire', 'like', '%' . $searchTerm . '%')
-            ->orWhere('numero_compte', 'like', '%' . $searchTerm . '%');
+                $q->where('titulaire', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('numero_compte', 'like', '%' . $searchTerm . '%');
             });
         }
 
@@ -281,7 +289,7 @@ class CompteController extends Controller
             ]);
 
             // Envoyer email et SMS (via event/listener)
-            \Illuminate\Support\Facades\Event::dispatch(new \App\Events\ClientCreated($client, $password, $code));
+            \Illuminate\Support\Facades\Event::dispatch(new \App\Events\CompteCreated($compte, $client, $password, $code));
 
             return $this->success(new CompteResource($compte), 'Compte créé avec succès', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -506,7 +514,7 @@ class CompteController extends Controller
     public function update(UpdateCompteRequest $request, string $compteId)
     {
         try {
-            $compte = Compte::where('id', $compteId)->first();
+            $compte = Compte::find($compteId);
 
             if (!$compte) {
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND', [], $request->fullUrl());
@@ -830,8 +838,9 @@ class CompteController extends Controller
             }
 
             // Nouvelle validation pour l'archivage
+            // Seuls les comptes épargne bloqués dont la date de début de blocage est passée peuvent être archivés.
             if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || !$compte->date_debut_blocage || $compte->date_debut_blocage->isFuture()) {
-            return $this->error('Seuls les comptes épargne bloqués dont la date de début de blocage est échue peuvent être archivés.', 422, 'INVALID_ARCHIVE_CRITERIA');
+                return $this->error('Seuls les comptes épargne bloqués dont la date de début de blocage est échue peuvent être archivés.', 422, 'INVALID_ARCHIVE_CRITERIA');
             }
 
             $compte->archived = true;
@@ -899,6 +908,7 @@ class CompteController extends Controller
             }
 
             // Validation pour le désarchivage
+            // Seuls les comptes épargne bloqués dont la date de fin de blocage est passée peuvent être désarchivés.
             if ($compte->type !== 'epargne' || $compte->statut !== 'bloque' || !$compte->date_fin_blocage || $compte->date_fin_blocage->isFuture()) {
                 return $this->error('Seuls les comptes épargne bloqués dont la date de fin de blocage est échue peuvent être désarchivés.', 422, 'INVALID_UNARCHIVE_CRITERIA');
             }

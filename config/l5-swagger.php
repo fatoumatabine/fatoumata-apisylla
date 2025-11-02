@@ -227,7 +227,6 @@ return [
                     'bearerFormat' => 'JWT',
                     'description' => 'Authentification Bearer Token pour accéder aux endpoints protégés'
                 ],
-                */
             ],
             'security' => [
                 /*

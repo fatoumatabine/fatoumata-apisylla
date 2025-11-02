@@ -7,17 +7,25 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Compte;
+use App\Models\User; // Importation du modèle User
 use Illuminate\Support\Facades\Event;
 use App\Events\ClientCreated;
+use Laravel\Passport\Passport; // Importation de Passport
 
 class CompteCreationTest extends TestCase
 {
     use RefreshDatabase;
     use WithFaker;
 
+    protected User $user;
+
     protected function setUp(): void
     {
         parent::setUp();
+        // Créer un utilisateur et un jeton Passport pour l'authentification des tests
+        $this->user = User::factory()->create(['role' => 'admin']); // Créer un admin pour les tests
+        Passport::actingAs($this->user);
+
         // Assurez-vous que les événements sont faux pour éviter l'envoi réel d'e-mails/SMS pendant les tests
         Event::fake();
     }

@@ -420,45 +420,4 @@ Route::prefix('v1')->group(function () {
      *     )
      * )
      */
-     Route::post('/comptes/{compteId}/transactions', [TransactionController::class, 'store']);
-
-    /**
-     * @OA\Get(
-     *     path="/api/v1/comptes/{compteId}/transactions/{transactionId}",
-     *     summary="Afficher une transaction spécifique",
-     *     tags={"Transactions"},
-     *     @OA\Parameter(
-     *         name="compteId",
-     *         in="path",
-     *         required=true,
-     *         description="ID du compte",
-     *         @OA\Schema(type="string", format="uuid")
-     *     ),
-     *     @OA\Parameter(
-     *         name="transactionId",
-     *         in="path",
-     *         required=true,
-     *         description="ID de la transaction",
-     *         @OA\Schema(type="string", format="uuid")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Transaction trouvée",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Transaction trouvée"),
-     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Transaction non trouvée"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Erreur serveur"
-     *     )
-     * )
-     */
-     Route::get('/comptes/{compteId}/transactions/{transactionId}', [TransactionController::class, 'show']);
  });
