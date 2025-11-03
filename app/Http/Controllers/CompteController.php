@@ -40,6 +40,24 @@ class CompteController extends Controller
     use ApiResponseTrait;
 
     /**
+     * Vérifier si l'utilisateur authentifié peut accéder à un compte spécifique
+     */
+    private function canAccessAccount(Compte $compte, $user): bool
+    {
+        // Les admins peuvent accéder à tous les comptes
+        if ($user && $user->isAdmin()) {
+            return true;
+        }
+
+        // Les clients ne peuvent accéder qu'à leurs propres comptes
+        if ($user && $user->isClient()) {
+            return $compte->client && $compte->client->user_id === $user->id;
+        }
+
+        return false;
+    }
+
+    /**
      * @OA\Get(
      *      path="/api/v1/comptes",
      *      operationId="getComptesList",
@@ -106,7 +124,17 @@ class CompteController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user('api');
         $query = Compte::query();
+
+        // Autorisation : filtrer selon le rôle de l'utilisateur
+        if ($user && $user->isClient()) {
+            // Les clients ne voient que leurs propres comptes
+            $query->whereHas('client', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+        // Les admins voient tous les comptes (pas de filtre supplémentaire)
 
         // Filtrer par type
         if ($request->has('type')) {
@@ -382,13 +410,19 @@ class CompteController extends Controller
      *      )
      * )
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         try {
             $compte = Compte::with('client')->find($id);
 
             if (!$compte) {
                 return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            // Vérifier l'autorisation
+            $user = $request->user('api');
+            if (!$this->canAccessAccount($compte, $user)) {
+                return $this->error('Accès non autorisé à ce compte.', 403, 'ACCESS_DENIED');
             }
 
             return $this->success(new CompteResource($compte), 'Compte récupéré avec succès');
@@ -801,6 +835,81 @@ class CompteController extends Controller
         } catch (\Exception $e) {
             Log::error('Erreur lors du désarchivage du compte: ' . $e->getMessage());
             return $this->error('Erreur interne du serveur lors du désarchivage du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *      path="/api/v1/comptes/{id}/statistics",
+     *      operationId="getCompteStatistics",
+     *      tags={"Comptes"},
+     *      summary="Obtenir les statistiques d'un compte spécifique",
+     *      description="Retourne les statistiques (total dépôt, total retrait, nombre de transactions, dernière transaction) pour un compte bancaire par son ID.",
+     *      security={{"bearerAuth": {}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="ID du compte pour lequel récupérer les statistiques",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Opération réussie",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Statistiques du compte récupérées avec succès"),
+     *              @OA\Property(property="data", type="object",
+     *                  @OA\Property(property="total_depot", type="number", format="float", example=5000.00),
+     *                  @OA\Property(property="total_retrait", type="number", format="float", example=1500.00),
+     *                  @OA\Property(property="nombre_transactions", type="integer", example=25),
+     *                  @OA\Property(property="derniere_transaction", type="object", ref="#/components/schemas/TransactionResource", nullable=true)
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Compte non trouvé",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=false),
+     *              @OA\Property(property="message", type="string", example="Compte non trouvé.")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Non authentifié",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *          )
+     *      )
+     * )
+     */
+    public function getCompteStatistics(string $id)
+    {
+        try {
+            $compte = Compte::find($id);
+
+            if (!$compte) {
+                return $this->error('Compte non trouvé.', 404, 'COMPTE_NOT_FOUND');
+            }
+
+            $totalDepot = $compte->transactions()->where('type', 'credit')->sum('montant');
+            $totalRetrait = $compte->transactions()->where('type', 'debit')->sum('montant');
+            $nombreTransactions = $compte->transactions()->count();
+            $derniereTransaction = $compte->transactions()->orderBy('date_transaction', 'desc')->first();
+
+            $data = [
+                'total_depot' => $totalDepot,
+                'total_retrait' => $totalRetrait,
+                'nombre_transactions' => $nombreTransactions,
+                'derniere_transaction' => $derniereTransaction ? new \App\Http\Resources\TransactionResource($derniereTransaction) : null,
+            ];
+
+            return $this->success($data, 'Statistiques du compte récupérées avec succès');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des statistiques du compte: ' . $e->getMessage());
+            return $this->error('Erreur interne du serveur lors de la récupération des statistiques du compte.', 500, 'INTERNAL_SERVER_ERROR', ['exception' => $e->getMessage()]);
         }
     }
 }

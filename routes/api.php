@@ -252,6 +252,7 @@ Route::prefix('v1')->group(function () {
     Route::delete('/comptes/{id}', [CompteController::class, 'destroy']);
     Route::patch('/comptes/{id}/block', [CompteController::class, 'block']);
     Route::patch('/comptes/{id}/unblock', [CompteController::class, 'unblock']);
+    Route::get('/comptes/{id}/statistics', [CompteController::class, 'getCompteStatistics']);
     /**
      * @OA\Patch(
      *      path="/api/v1/comptes/{compteId}",

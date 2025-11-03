@@ -60,6 +60,7 @@ class Kernel extends HttpKernel
     'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
     'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
     'can' => \Illuminate\Auth\Middleware\Authorize::class,
+    'check.account.access' => \App\Http\Middleware\CheckAccountAccess::class,
     'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
     'logging' => \App\Http\Middleware\LoggingMiddleware::class,
     'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
